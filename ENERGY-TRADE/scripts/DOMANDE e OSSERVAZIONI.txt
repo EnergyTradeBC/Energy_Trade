@@ -1,0 +1,54 @@
+- C_GREEN e gli altri (RED, YELLOW, ecc.) sono i colori dell'output nel terminale (sono variabili di environment?)
+
+- tutti i codici devono iniziare per "#!/bin/bash" o è solo un commento fine a sè stesso? => fa riferimento all'interprete per comandi da 
+terminale che verrà utilizzato [#!/bin/bash significa che lo script usa Bourne Again SHell, BASH.]
+
+- quando voglio "importare" un altro modulo sh cosa cambia tra ". /path/al/modulo.sh" e "source /path/al/modulo.sh"? => si equivalgono
+e il codice all'interno del modulo importato viene lanciato (quindi se c'è qualcosa di esterno alle funzioni viene eseguito, come per esempio
+tutti gli export all'inizio di envVar.sh)
+
+- deployCC: esegue un check dei prerequisiti prima di eseguire tutti i comandi; siccome noi eseguiremo un comando per volta ha senso fare il 
+check ogni volta che lanciamo un comando diverso o basta solo la prima volta che lanciamo deployCC (per esempio richiedendo la funzione
+packageChaincode)?
+
+- "function" prima della definizione di una funzione è opzionale
+
+- fintanto che un modulo viene importato nello script principale esso può essere utilizzato anche negli script che vengono chiamati dal 
+principale (per esempio deployCC.sh importa ccutils.sh il quale usa setGlobal, che è una funzione di envVar.sh, senza però importare il
+pacchetto, dato che è già stato importato in deployCC)
+
+- comando "set -x": ?????????????????
+
+- comando "test": comando usato per testare la validità di un altro comando. Controlla se il comando/espressione è vera (ritorna 0) o falsa (1)
+(per esempio dentro ad installChaincode, dentro ccutils.sh, viene eseguito "test $?": se "test $?" è diverso da 0, quindi $? è falso (significa
+che il comando precedente che verifica se la chaincode è già installata ha fallito => la chaincode non è già installata), allora verrà eseguito
+il comando che installa la chaincode; se la chaincode viene installata correttamente $? sarà = 0, se no $?=1; nel secondo caso $res diventerà 
+= 1, quindi, quando verrà chiamato verifyResult (funzione presente alla fine di envVar.sh) anch'esso controllerà se $res è diverso da
+0 e se è diverso da 0 lancerà l'errore "Chaincode installation on peer0.org${ORG} has failed", che è stato passato come secondo input a 
+verifyResult, interrompendo l'esecuzione)
+
+- che cosa significa/cosa rappresenta $? => contiene l'exit status dell'ultimo comando lanciato 
+
+- variabili di path e variabili in generale: separando l'esecuzione dei diversi comandi presenti negli script principali (come createChannel.sh,
+deployCC.sh, ..), ogni volta che viene chiamato lo stesso script (con argomenti diversi) si crea una nuova istanza (?) dello script stessp 
+quindi, se nella chiamata precedente ho creato delle variabili (o ne ho fatto l'export), queste variabili non saranno presenti/utilizzabili
+in una successiva chiamata quindi è NECESSARIO ricrearle ogni volta (ex: ccutils.sh, la funzione "installChaincode" ha bisogno di creare 
+nuovamente la variabile PACKAGE_ID anche se è stata creata nella funzione "packageChaincode", che però è stata chiamata nella call precedente
+a deployCC e quindi una volta terminata l'esecuzione è stata dimenticata) 
+
+- alcune funzioni hanno all'interno comandi in cui le informazioni dell'orderer sono HARDCODED siccome nella test network ce n'è solo uno
+==> PRESTARCI ATTENZIONE E CAPIRE COME COSTRUIRE ANCHE QUELLE INFORMAZIONI (da chi o da dove posso ottenerle)
+
+- comando "shift": rimuove argomenti dalla lista degli argomenti (shift 2 per esempio invece rimuove i primi 2 argomenti); se la mia lista di 
+argomenti è composta da $1, $2 e $3, una volta chiamato shift l'argomento $2 diventerà il nuovo argomento $1 (e quindi gli argomenti
+diventeranno $1 e $2)
+
+- comando "exit": permette di uscire da uno script passando un valore (0 se lo script è stato eseguito con successo, altri valori se no)
+
+- OSSERVAZIONE: siccome nella nostra implementazione ogni peer avrà la sua versione degli script .sh (non condividono le directory come con la
+test network) è necessario che tra le variabili di environment sia presente il numero dell'organizzazione e il numero del peer stesso (nel
+nostro caso è semplice il secondo perché sarà sempre 0); CONVIENE INSERIRE QUESTE INFO NEL FILE .PROFILE (HARDCODED come se fosse uno dei 
+settaggi necessari prima di diventare peer della blockchain, insieme ai certificati(?)) => per ora userò le variabili fittizie 
+"ORG_N" e "PEER_N" (non è stato necessario per il momento siccome sarebbero serviti solo per usare setGlobals)
+(anche tutti gli altri export che nei tutorial faceva fare prima di operare come un peer o un altro => "setGlobals" 
+di envVar.sh)

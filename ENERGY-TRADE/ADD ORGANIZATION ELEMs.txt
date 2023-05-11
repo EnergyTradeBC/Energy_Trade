@@ -1,0 +1,29 @@
+Elementi necessari per la creazione di un'organizzazione - Riferimento alla directory addOrg3
+
+
+VERSIONE USANDO CRYPTOGEN
+
+- org3-crypto.yaml (crypto-config-orgX.yaml): file necessario a cryptogen 
+
+- in fase di creazione di una organizzazione, utilizzando cryptogen, è necessario lanciare le seguenti righe di codice 
+    
+    infoln "Creating OrgX Identities"
+
+    set -x
+    cryptogen generate --config=./organizations/cryptogen/crypto-config-orgX.yaml --output="organizations"
+    res=$?
+    { set +x; } 2>/dev/null
+    if [ $res -ne 0 ]; then
+      fatalln "Failed to generate certificates..."
+    fi
+
+- versione "personalizzata" di ccpgenerate.sh
+
+- versione "personalizzata" di compose/docker/docker-compose-test-net.yaml (e anche gli altri file docker e il file core.yaml ?)
+
+- versione "personalizzata" di compose/compose-org3.yaml (file necessario per runnare docker compose)
+
+
+VERSIONE USANDO LE CERTIFICATION AUTHORITY
+
+- da vedere!

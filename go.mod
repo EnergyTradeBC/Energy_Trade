@@ -1,4 +1,4 @@
-module module
+module github.com/EnergyTradeBC/Energy_Trade
 
 go 1.20
 

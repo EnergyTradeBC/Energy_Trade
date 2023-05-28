@@ -1,14 +1,10 @@
-/*
-SPDX-License-Identifier: Apache-2.0
-*/
-
-package main
+package chaincode
 
 import (
 	"log"
 
-	"github.com/EnergyTradeBC/fabric-samples/token-utxo/chaincode-go/chaincode"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
+	"github.com/hyperledger/fabric-samples/token-utxo/chaincode-go/chaincode"
 )
 
 func main() {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/hyperledger/fabric-chaincode-go/shim"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
@@ -68,7 +69,7 @@ func verifyClientIDMatchesOwnerID(ctx contractapi.TransactionContextInterface, a
 	var asset Asset
 	err = json.Unmarshal(assetJSON, &asset)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Get ID of submitting client identity

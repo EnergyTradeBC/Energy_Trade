@@ -2,6 +2,11 @@
 
 . scripts/utils.sh
 . scripts/deployCCHelp.sh
+. scripts/envVar.sh
+. scripts/actAsOrg.sh
+
+export PATH=${PWD}/../bin:$PATH
+export FABRIC_CFG_PATH=$PWD/../config/
 
 # Extract the MODE as the first argument and shift to the next one. 
 # If there is no argument calls the general help
@@ -15,11 +20,76 @@ else
     if [ "$MODE" = "-h" ]; then
         deployCCHelp
         exit 0
+
+    elif [ "$MODE" = "installChaincode" ]; then
+        if [[ $# -lt 1 ]] ; then
+            deployCCHelp $MODE
+            exit 0
+        else
+            ORG=$1
+            shift
+        fi
+    
+    elif [ "$MODE" = "queryInstalled" ]; then
+        if [[ $# -lt 1 ]] ; then
+            deployCCHelp $MODE
+            exit 0
+        else
+            ORG=$1
+            shift
+        fi
+    
+    elif [ "$MODE" = "approveForMyOrg" ]; then
+        if [[ $# -lt 1 ]] ; then
+            deployCCHelp $MODE
+            exit 0
+        else
+            ORG=$1
+            shift
+        fi
+    
+    elif [ "$MODE" = "checkCommitReadiness" ]; then
+        if [[ $# -lt 1 ]] ; then
+            deployCCHelp $MODE
+            exit 0
+        else
+            ORG=$1
+            shift
+        fi
+    
+    elif [ "$MODE" = "commitChaincodeDefinition" ]; then
+        if [[ $# -lt 1 ]] ; then
+            deployCCHelp $MODE
+            exit 0
+        else
+            ORG1=$1
+            shift
+            ORG2=$1
+            shift
+        fi
+    
+    elif [ "$MODE" = "queryCommitted" ]; then
+        if [[ $# -lt 1 ]] ; then
+            deployCCHelp $MODE
+            exit 0
+        else
+            ORG=$1
+            shift
+        fi
+    
+    elif [ "$MODE" = "chaincodeInvokeInit" ]; then
+        if [[ $# -lt 1 ]] ; then
+            deployCCHelp $MODE
+            exit 0
+        else
+            ORG=$1
+            shift
+        fi
     fi
 fi
 
 # Set the default values
-CHANNEL_NAME="CER"
+CHANNEL_NAME="cer"
 CC_NAME=""
 CC_SRC_PATH=""
 CC_VERSION="1.0"
@@ -127,7 +197,7 @@ while [[ $# -ge 1 ]] ; do
         ;;
     *)
         errorln "Unknown flag: $key"
-        createChannelHelp
+        deployCCHelp
         exit 1
         ;;
     esac
@@ -136,7 +206,7 @@ done
 #User has not provided a name
 if [ -z "$CC_NAME" ] || [ "$CC_NAME" = "NA" ]; then
     fatalln "No chaincode name was provided. Check for the correct parameters in the help"
-    createChannelHelp
+    deployCCHelp
     exit 1
 fi
 
@@ -236,11 +306,11 @@ elif [ "$MODE" == "checkCommitReadiness" ]; then
     # Dovremmo passargli in modo dinamico la policy strategy per controllare se è verificata o meno? comunque non ho ancora ben capito come 
     # funzioni checkCommitReadiness, suppongo che quello che gli venga passato sia la policy da controllare e a noi dovrebbe interessare 
     # controllare se la policy imposta dal canale sia verificata (?) 
-    checkCommitReadiness "\"Org1MSP\": true" "\"Org2MSP\": false"
+    checkCommitReadiness "\"Org1MSP\": true" "\"Org2MSP\": true" "\"Org3MSP\": true"
 
 elif [ "$MODE" == "commitChaincodeDefinition" ]; then
     infoln "Committing the chaincode definition"
-    commitChaincodeDefinition 
+    commitChaincodeDefinition $ORG1 $ORG2
 
 elif [ "$MODE" == "queryCommitted" ]; then
     infoln "Checking for successful definition commit"
@@ -250,7 +320,7 @@ elif [ "$MODE" == "chaincodeInvokeInit" ]; then
     if [ "$CC_INIT_FCN" = "NA" ]; then
         fatalln "No chaincode init function was provided."
     else
-        chaincodeInvokeInit 
+        chaincodeInvokeInit $ORG1 $ORG2
     fi
 
 elif [ "$MODE" == "chaincodeQuery" ]; then

@@ -22,7 +22,7 @@ function deployCCHelp() {
         println "      -h - Print this message"
     elif [ "$USAGE" == "installChaincode" ]; then
         println "Usage: "
-        println "  deployCC.sh ${C_GREEN}installChaincode${C_RESET} [Flags]"
+        println "  deployCC.sh ${C_GREEN}installChaincode <Org>${C_RESET} [Flags]"
         println
         println "    Flags:"
         println "      -ccn <name> - Chaincode name"
@@ -31,7 +31,7 @@ function deployCCHelp() {
         println "      -h - Print this message"
     elif [ "$USAGE" == "queryInstalled" ]; then
         println "Usage: "
-        println "  deployCC.sh ${C_GREEN}queryInstalled${C_RESET} [Flags]"
+        println "  deployCC.sh ${C_GREEN}queryInstalled <Org>${C_RESET} [Flags]"
         println
         println "    Flags:"
         println "      -ccn <name> - Chaincode name"
@@ -40,10 +40,10 @@ function deployCCHelp() {
         println "      -h - Print this message"
     elif [ "$USAGE" == "approveForMyOrg" ]; then
         println "Usage: "
-        println "  deployCC.sh ${C_GREEN}approveForMyOrg${C_RESET} [Flags]"
+        println "  deployCC.sh ${C_GREEN}approveForMyOrg <Org>${C_RESET} [Flags]"
         println
         println "    Flags:"
-        println "      -c <channel name> - Name of the channel in which the chaincode will be approved (default to \"CER\")"
+        println "      -c <channel name> - Name of the channel in which the chaincode will be approved (default to \"cer\")"
         println "      -ccn <name> - Chaincode name"
         println "      -ccv <version> - Chaincode version (default to \"1.0\")"
         println "      -ccs <sequence> - Chaincode definition sequence. Must be an integer (default to \"1\")"
@@ -55,12 +55,12 @@ function deployCCHelp() {
         println "      -h - Print this message"
     elif [ "$USAGE" == "checkCommitReadiness" ]; then
         println "Usage: "
-        println "  deployCC.sh ${C_GREEN}checkCommitReadiness${C_RESET} [Flags]"
+        println "  deployCC.sh ${C_GREEN}checkCommitReadiness <Org>${C_RESET} [Flags]"
         println
         println "    Flags:"
-        println "      -c <channel name> - Name of the channel in which the chaincode definition will be checked (default to \"CER\")"
-        println "      -d <delay> - CLI delays for a certain number of seconds (defaults to 3)"
-        println "      -r <max retry> - CLI times out after certain number of attempts (defaults to 5)"
+        println "      -c <channel name> - Name of the channel in which the chaincode definition will be checked (default to \"cer\")"
+        println "      -d <delay> - CLI delays for a certain number of seconds (defaults to \"3\")"
+        println "      -r <max retry> - CLI times out after certain number of attempts (defaults to \"5\")"
         println "      -ccn <name> - Chaincode name"
         println "      -ccv <version> - Chaincode version (default to \"1.0\")"
         println "      -ccs <sequence> - Chaincode definition sequence. Must be an integer (default to \"1\")"
@@ -72,10 +72,10 @@ function deployCCHelp() {
         println "      -h - Print this message"
     elif [ "$USAGE" == "commitChaincodeDefinition" ]; then
         println "Usage: "
-        println "  deployCC.sh ${C_GREEN}commitChaincodeDefinition${C_RESET} [Flags]"
+        println "  deployCC.sh ${C_GREEN}commitChaincodeDefinition <Org1> <Org2> ..${C_RESET} [Flags]"
         println
         println "    Flags:"
-        println "      -c <channel name> - Name of the channel in which the chaincode definition will be committed (default to \"CER\")"
+        println "      -c <channel name> - Name of the channel in which the chaincode definition will be committed (default to \"cer\")"
         println "      -ccn <name> - Chaincode name"
         println "      -ccv <version> - Chaincode version (default to \"1.0\")"
         println "      -ccs <sequence> - Chaincode definition sequence. Must be an integer (default to \"1\")"
@@ -87,12 +87,12 @@ function deployCCHelp() {
         println "      -h - Print this message"
     elif [ "$USAGE" == "queryCommitted" ]; then
         println "Usage: "
-        println "  deployCC.sh ${C_GREEN}queryCommitted${C_RESET} [Flags]"
+        println "  deployCC.sh ${C_GREEN}queryCommitted <Org>${C_RESET} [Flags]"
         println
         println "    Flags:"
-        println "      -c <channel name> - Name of the channel in which will be checked the commit of the chaincode (default to \"CER\")"
-        println "      -d <delay> - CLI delays for a certain number of seconds (defaults to 3)"
-        println "      -r <max retry> - CLI times out after certain number of attempts (defaults to 5)"
+        println "      -c <channel name> - Name of the channel in which will be checked the commit of the chaincode (default to \"cer\")"
+        println "      -d <delay> - CLI delays for a certain number of seconds (defaults to \"3\")"
+        println "      -r <max retry> - CLI times out after certain number of attempts (defaults to \"5\")"
         println "      -ccn <name> - Chaincode name"
         println "      -ccv <version> - Chaincode version (default to \"1.0\")"
         println "      -ccs <sequence> - Chaincode definition sequence. Must be an integer (default to \"1\")"
@@ -101,10 +101,10 @@ function deployCCHelp() {
         println "      -h - Print this message"
     elif [ "$USAGE" == "chaincodeInvokeInit" ]; then
         println "Usage: "
-        println "  deployCC.sh ${C_GREEN}chaincodeInvokeInit${C_RESET} [Flags]"
+        println "  deployCC.sh ${C_GREEN}chaincodeInvokeInit <Org1> <Org2> ..${C_RESET} [Flags]"
         println
         println "    Flags:"
-        println "      -c <channel name> - Name of the channel in which the chaincode will be invoked (default to \"CER\")"
+        println "      -c <channel name> - Name of the channel in which the chaincode will be invoked (default to \"cer\")"
         println "      -ccn <name> - Chaincode name"
         println "      -cci <fcn name> - Name of chaincode initialization function (default to \"NA\")"
         println "      -verbose - Verbose mode"
@@ -116,10 +116,10 @@ function deployCCHelp() {
     #     println "  deployCC.sh ${C_GREEN}chaincodeQuery${C_RESET} [Flags]"
     #     println
     #     println "    Flags:"
-    #     println "      -c <channel name> - Name of the channel in which the chaincode will be invoked (default to \"CER\")"
+    #     println "      -c <channel name> - Name of the channel in which the chaincode will be invoked (default to \"cer\")"
     #     println "      -ccn <name> - Chaincode name"
-    #     println "      -d <delay> - CLI delays for a certain number of seconds (defaults to 3)"
-    #     println "      -r <max retry> - CLI times out after certain number of attempts (defaults to 5)"
+    #     println "      -d <delay> - CLI delays for a certain number of seconds (defaults to \"3\"")"
+    #     println "      -r <max retry> - CLI times out after certain number of attempts (defaults to \"5\"")"
     #     println "      -verbose - Verbose mode"
     #     println
     #     println "      -h - Print this message"

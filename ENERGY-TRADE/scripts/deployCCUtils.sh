@@ -19,6 +19,7 @@ function packageChaincode() {
 
 # Install a chaincode 
 function installChaincode() {
+    actAsOrg $ORG
     # The variables must be created each time since each time we call deployCC we launch/create a new instance of it 
     PACKAGE_ID=$(peer lifecycle chaincode calculatepackageid ${CC_NAME}.tar.gz)
 
@@ -37,6 +38,7 @@ function installChaincode() {
 # Verify if a chaincode is installed
 # (è praticamente uguale alla precedente però non c'è l'if che permette di installare la chaincode se non è presente)
 function queryInstalled() {
+    actAsOrg $ORG
     # The variables must be created each time since each time we call deployCC we launch/create a new instance of it 
     PACKAGE_ID=$(peer lifecycle chaincode calculatepackageid ${CC_NAME}.tar.gz)
 
@@ -52,6 +54,7 @@ function queryInstalled() {
 # Approve a chaincode definition on a channel
 # MODIFICARE LA CALL HARDCODED ALL'ORDERER (-o localhost:7050 e --ordererTLSHostnameOverride)
 function approveForMyOrg() {
+    actAsOrg $ORG
     # The variables must be created each time since each time we call deployCC we launch/create a new instance of it 
     PACKAGE_ID=$(peer lifecycle chaincode calculatepackageid ${CC_NAME}.tar.gz)
 
@@ -66,6 +69,7 @@ function approveForMyOrg() {
 
 # Check whether a chaincode definition is ready to be committed on a channel
 function checkCommitReadiness() {
+    actAsOrg $ORG
     infoln "Checking the commit readiness of the chaincode definition on channel '$CHANNEL_NAME'..."
     local rc=1
     local COUNTER=1
@@ -99,13 +103,17 @@ function checkCommitReadiness() {
 
 # Commit the chaincode definition on the channel.
 function commitChaincodeDefinition() {
+    parsePeerConnectionParameters $@
+    res=$?
+    verifyResult $res "Invoke transaction failed on channel '$CHANNEL_NAME' due to uneven number of peer and org parameters "
+
     # ==> MODIFICARE LA CALL HARDCODED ALL'ORDERER (-o localhost:7050) E CAPIRE COSA è --ordererTLSHostnameOverride
 
     # while 'peer chaincode' command can get the orderer endpoint from the
     # peer (if join was successful), let's supply it directly as we know
     # it using the "-o" option 
     set -x
-    peer lifecycle chaincode commit -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile "$ORDERER_CA" --channelID $CHANNEL_NAME --name ${CC_NAME} --version ${CC_VERSION} --sequence ${CC_SEQUENCE} ${INIT_REQUIRED} ${CC_END_POLICY} ${CC_COLL_CONFIG} >&log.txt
+    peer lifecycle chaincode commit -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile "$ORDERER_CA" --channelID $CHANNEL_NAME --name ${CC_NAME} "${PEER_CONN_PARMS[@]}" --version ${CC_VERSION} --sequence ${CC_SEQUENCE} ${INIT_REQUIRED} ${CC_END_POLICY} ${CC_COLL_CONFIG} >&log.txt
     res=$?
     { set +x; } 2>/dev/null
     cat log.txt
@@ -115,6 +123,7 @@ function commitChaincodeDefinition() {
 
 # queryCommitted ORG
 function queryCommitted() {
+    actAsOrg $ORG
     EXPECTED_RESULT="Version: ${CC_VERSION}, Sequence: ${CC_SEQUENCE}, Endorsement Plugin: escc, Validation Plugin: vscc"
     infoln "Querying chaincode definition on channel '$CHANNEL_NAME'..."
     local rc=1
@@ -147,6 +156,10 @@ function queryCommitted() {
 # The chaincode must have the initLedger method defined
 
 function chaincodeInvokeInit() {
+    parsePeerConnectionParameters $@
+    res=$?
+    verifyResult $res "Invoke transaction failed on channel '$CHANNEL_NAME' due to uneven number of peer and org parameters "
+    
     # ==> MODIFICARE LA CALL HARDCODED ALL'ORDERER (-o localhost:7050) E CAPIRE COSA è --ordererTLSHostnameOverride
 
     # while 'peer chaincode' command can get the orderer endpoint from the
@@ -174,6 +187,7 @@ function chaincodeInvokeInit() {
 # ORG è sottintesa essere una variabile di environment presettata e disponibile su ogni peer
 
 function chaincodeQuery() {
+    actAsOrg $ORG
     infoln "Querying on channel '$CHANNEL_NAME'..."
     local rc=1
     local COUNTER=1

@@ -48,7 +48,7 @@ func verifyClientOrgMatchesPeerOrg(ctx contractapi.TransactionContextInterface) 
 	}
 
 	if clientMSPID != peerMSPID {
-		return fmt.Errorf("client from org %v is not authorized to read or write private data from an org %v peer", clientMSPID, peerMSPID)
+		return fmt.Errorf("client from org %v is not authorized to write private data from an org %v peer", clientMSPID, peerMSPID)
 	}
 
 	return nil
@@ -335,30 +335,30 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 	return "", nil
 }
 
-// // GetAllAssets returns all assets found in world state
-// func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface) ([]*Asset, error) {
-// 	// range query with empty string for startKey and endKey does an
-// 	// open-ended query of all assets in the chaincode namespace.
-// 	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer resultsIterator.Close()
+// GetAllAssets returns all assets found in world state
+func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface) ([]*Asset, error) {
+	// range query with empty string for startKey and endKey does an
+	// open-ended query of all assets in the chaincode namespace.
+	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
+	if err != nil {
+		return nil, err
+	}
+	defer resultsIterator.Close()
 
-// 	var assets []*Asset
-// 	for resultsIterator.HasNext() {
-// 		queryResponse, err := resultsIterator.Next()
-// 		if err != nil {
-// 			return nil, err
-// 		}
+	var assets []*Asset
+	for resultsIterator.HasNext() {
+		queryResponse, err := resultsIterator.Next()
+		if err != nil {
+			return nil, err
+		}
 
-// 		var asset Asset
-// 		err = json.Unmarshal(queryResponse.Value, &asset)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		assets = append(assets, &asset)
-// 	}
+		var asset Asset
+		err = json.Unmarshal(queryResponse.Value, &asset)
+		if err != nil {
+			return nil, err
+		}
+		assets = append(assets, &asset)
+	}
 
-// 	return assets, nil
-// }
+	return assets, nil
+}

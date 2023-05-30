@@ -70,8 +70,8 @@ parsePeerConnectionParameters() {
 	PEERS="$PEERS $PEER"
     fi
     PEER_CONN_PARMS=("${PEER_CONN_PARMS[@]}" --peerAddresses $CORE_PEER_ADDRESS)
-
-    TLSINFO=(--tlsRootCertFiles "${!CORE_PEER_TLS_ROOTCERT_FILE}")
+  
+    TLSINFO=(--tlsRootCertFiles $CORE_PEER_TLS_ROOTCERT_FILE)
     PEER_CONN_PARMS=("${PEER_CONN_PARMS[@]}" "${TLSINFO[@]}")
   done
 }

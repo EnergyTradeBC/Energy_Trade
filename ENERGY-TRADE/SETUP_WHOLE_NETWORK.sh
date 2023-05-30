@@ -32,7 +32,7 @@ set -x
 ./scripts/createChannel.sh submitConfig 5 4 -c channeltest
 ./scripts/createChannel.sh join 5 -c channeltest
 
-./scripts/deployCC.sh packageChaincode -ccn chaincodetest -ccp ../asset-transfer-energy/chaincode
+./scripts/deployCC.sh packageChaincode -ccn chaincodetest -ccp ../asset-transfer-energy
 
 ./scripts/deployCC.sh installChaincode 1 -ccn chaincodetest
 ./scripts/deployCC.sh installChaincode 2 -ccn chaincodetest
@@ -40,7 +40,7 @@ set -x
 ./scripts/deployCC.sh installChaincode 4 -ccn chaincodetest
 ./scripts/deployCC.sh installChaincode 5 -ccn chaincodetest
 
-./scripts/deployCC.sh checkCommitReadiness 1 -ccn chaincodetest -c channeltest
+#./scripts/deployCC.sh checkCommitReadiness 1 -ccn chaincodetest -c channeltest
 
 ./scripts/deployCC.sh approveForMyOrg 1 -ccn chaincodetest -c channeltest
 ./scripts/deployCC.sh approveForMyOrg 2 -ccn chaincodetest -c channeltest
@@ -48,8 +48,17 @@ set -x
 ./scripts/deployCC.sh approveForMyOrg 4 -ccn chaincodetest -c channeltest
 ./scripts/deployCC.sh approveForMyOrg 5 -ccn chaincodetest -c channeltest
 
-./scripts/deployCC.sh checkCommitReadiness 1 -ccn chaincodetest -c channeltest
+#./scripts/deployCC.sh checkCommitReadiness 1 -ccn chaincodetest -c channeltest
 
 ./scripts/deployCC.sh commitChaincodeDefinition 1 2 3 4 5 -ccn chaincodetest -c channeltest
+
+# Export environment variables to operate and call the smart contract from the peer of org 1
+export CORE_PEER_LOCALMSPID="Org1MSP"
+export CORE_PEER_TLS_ROOTCERT_FILE=${PWD}/organizations/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem
+export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
+export CORE_PEER_ADDRESS=localhost:7051
+
+export PATH=${PWD}/../bin:$PATH
+export FABRIC_CFG_PATH=$PWD/../config/
 
 set +x

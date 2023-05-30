@@ -27,7 +27,7 @@ type Asset struct {
 func submittingClientIdentity(ctx contractapi.TransactionContextInterface) (string, error) {
 	b64ID, err := ctx.GetClientIdentity().GetID()
 	if err != nil {
-		return "", fmt.Errorf("Failed to read clientID: %v", err)
+		return "", fmt.Errorf("failed to read clientID: %v", err)
 	}
 	decodeID, err := base64.StdEncoding.DecodeString(b64ID)
 	if err != nil {
@@ -86,32 +86,6 @@ func verifyClientIDMatchesOwnerID(ctx contractapi.TransactionContextInterface, a
 	return nil
 }
 
-// InitLedger adds a base set of assets to the ledger
-// func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
-// 	assets := []Asset{
-// 		{ID: "asset1", Color: "blue", Size: 5, Owner: "Tomoko", AppraisedValue: 300},
-// 		{ID: "asset2", Color: "red", Size: 5, Owner: "Brad", AppraisedValue: 400},
-// 		{ID: "asset3", Color: "green", Size: 10, Owner: "Jin Soo", AppraisedValue: 500},
-// 		{ID: "asset4", Color: "yellow", Size: 10, Owner: "Max", AppraisedValue: 600},
-// 		{ID: "asset5", Color: "black", Size: 15, Owner: "Adriana", AppraisedValue: 700},
-// 		{ID: "asset6", Color: "white", Size: 15, Owner: "Michel", AppraisedValue: 800},
-// 	}
-
-// 	for _, asset := range assets {
-// 		assetJSON, err := json.Marshal(asset)
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		err = ctx.GetStub().PutState(asset.ID, assetJSON)
-// 		if err != nil {
-// 			return fmt.Errorf("failed to put to world state. %v", err)
-// 		}
-// 	}
-
-// 	return nil
-// }
-
 // CreateAsset issues a new asset to the world state with given details.
 func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, asset_ID string, quantity float32) error {
 
@@ -147,7 +121,12 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 		return err
 	}
 
-	return ctx.GetStub().PutState(asset_ID, assetJSON)
+	err = ctx.GetStub().PutState(asset_ID, assetJSON)
+	if err != nil {
+		return fmt.Errorf("failed to put to world state. %v", err)
+	}
+
+	return err
 }
 
 // ReadAsset returns the asset stored in the world state with given id.
@@ -253,16 +232,6 @@ func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface,
 	return ctx.GetStub().DelState(asset_ID)
 }
 
-// AssetExists returns true when asset with given ID exists in world state
-func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface, asset_ID string) (bool, error) {
-	assetJSON, err := ctx.GetStub().GetState(asset_ID)
-	if err != nil {
-		return false, fmt.Errorf("failed to read from world state: %v", err)
-	}
-
-	return assetJSON != nil, nil
-}
-
 // TransferAsset updates the owner field of asset with given id in world state, and returns the old owner.
 func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterface, asset_ID string, newOwner_ID string, transfer_quantity float32) (string, error) {
 
@@ -311,7 +280,7 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 
 		err := s.UpdateAsset(ctx, asset_ID, remaining_quantity)
 		if err != nil {
-			return "", fmt.Errorf("Old asset cannot be updated: Error %v", err)
+			return "", fmt.Errorf("old asset cannot be updated: Error %v", err)
 		}
 
 		// L'ASSET ID DEVE ESSERE CAMBIATO, MA QUALE USIAMO PER L'ASSET CHE VIENE CREATO IN MODO DA INVIARLO AL COMPRATORE?
@@ -361,4 +330,14 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 	}
 
 	return assets, nil
+}
+
+// AssetExists returns true when asset with given ID exists in world state
+func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface, asset_ID string) (bool, error) {
+	assetJSON, err := ctx.GetStub().GetState(asset_ID)
+	if err != nil {
+		return false, fmt.Errorf("failed to read from world state: %v", err)
+	}
+
+	return assetJSON != nil, nil
 }

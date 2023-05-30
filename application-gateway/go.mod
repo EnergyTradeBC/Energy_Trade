@@ -1,4 +1,4 @@
-module assetTransfer
+module application
 
 go 1.18
 
@@ -9,11 +9,14 @@ require (
 )
 
 require (
+	github.com/eclipse/paho.mqtt.golang v1.4.3-0.20230316190957-aa0a8ad044fe // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/miekg/pkcs11 v1.1.1 // indirect
-	golang.org/x/net v0.7.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
-	golang.org/x/text v0.7.0 // indirect
+	golang.org/x/net v0.8.0 // indirect
+	golang.org/x/sync v0.1.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/text v0.8.0 // indirect
 	google.golang.org/genproto v0.0.0-20230216225411-c8e22ba71e44 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 )

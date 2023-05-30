@@ -7,7 +7,8 @@ package main
 import (
 	"log"
 
-	"github.com/hyperledger/EnergyTrade/asset-transfer-energy/chaincode"
+	"asset-transfer-energy/chaincode"
+
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 

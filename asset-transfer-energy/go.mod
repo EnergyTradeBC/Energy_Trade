@@ -1,4 +1,4 @@
-module github.com/hyperledger/EnergyTrade/asset-transfer-energy
+module asset-transfer-energy
 
 go 1.17
 

@@ -1,11 +1,8 @@
-module github.com/EnergyTradeBC/Energy_Trade/asset-transfer-money
+module github.com/hyperledger/EnergyTrade/asset-transfer-money
 
-go 1.20
+go 1.17
 
-require (
-	github.com/hyperledger/fabric-contract-api-go v1.2.1
-	github.com/hyperledger/fabric-samples/token-erc-20/chaincode-go v0.0.0-20230525144102-2f11c4410f3f
-)
+require github.com/hyperledger/fabric-contract-api-go v1.2.1
 
 require (
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect

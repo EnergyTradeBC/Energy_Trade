@@ -59,6 +59,7 @@ export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org1.examp
 export CORE_PEER_ADDRESS=localhost:7051
 
 export PATH=${PWD}/../bin:$PATH
+#export PATH="/home/bchain/EnergyTrade/bin:$PATH"
 export FABRIC_CFG_PATH=$PWD/../config/
 
 set +x

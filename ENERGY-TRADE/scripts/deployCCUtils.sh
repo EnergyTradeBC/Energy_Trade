@@ -87,6 +87,7 @@ function checkCommitReadiness() {
             grep "$var" log.txt &>/dev/null || let rc=1
         done
         COUNTER=$(expr $COUNTER + 1)
+       # CC_SEQUENCE=$(expr $CC_SEQUENCE + 1)  # Increment CC_SEQUENCE by one
     done
     cat log.txt
     if test $rc -eq 0; then
@@ -117,8 +118,10 @@ function commitChaincodeDefinition() {
     res=$?
     { set +x; } 2>/dev/null
     cat log.txt
+    #CC_SEQUENCE=$(expr $CC_SEQUENCE + 1)  # Increment CC_SEQUENCE by one
     verifyResult $res "Chaincode definition commit failed on peer0.org${ORG} on channel '$CHANNEL_NAME' failed"
     successln "Chaincode definition committed on channel '$CHANNEL_NAME'"
+    
 }
 
 # queryCommitted ORG

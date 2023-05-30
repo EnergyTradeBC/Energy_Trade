@@ -93,7 +93,7 @@ CHANNEL_NAME="cer"
 CC_NAME=""
 CC_SRC_PATH=""
 CC_VERSION="1.0"
-CC_SEQUENCE="1"
+CC_SEQUENCE="1"  #not equal to 1 by default but it should increment with the number of chaincode committed to the channel
 CC_INIT_FCN="NA"
 CC_END_POLICY="NA"
 CC_COLL_CONFIG="NA"
@@ -103,6 +103,7 @@ VERBOSE="false"
 CC_RUNTIME_LANGUAGE=golang
 
 FABRIC_CFG_PATH=$PWD/../config/
+#FABRIC_CFG_PATH=/home/bchain/EnergyTrade/config/
 
 while [[ $# -ge 1 ]] ; do
     key="$1"

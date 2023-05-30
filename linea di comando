@@ -1,0 +1,16 @@
+cd /home/bchain/EnergyTrade/ENERGY-TRADE
+./SETUP_WHOLE_NETWORK.sh
+./prova.sh # qui abbiamo la chaincode dei soldi per ora
+'''
+per provare chaincode soldi
+peer chaincode invoke "${TARGET_TLS_OPTIONS[@]}" -C channeltest -n moneyAsset -c '{"function":"Initialize","Args":["money", "$", "2"]}'
+
+export RECIPIENT="eDUwOTo6Q049cmVjaXBpZW50LE9VPWNsaWVudCxPPUh5cGVybGVkZ2VyLFNUPU5vcnRoIENhcm9saW5hLEM9VVM6OkNOPWNhLm9yZzIuZXhhbXBsZS5jb20sTz1vcmcyLmV4YW1wbGUuY29tLEw9SHVyc2xleSxTVD1IYW1wc2hpcmUsQz1VSw=="
+peer chaincode invoke "${TARGET_TLS_OPTIONS[@]}" -C channeltest -n moneyAsset -c '{"function":"Mint","Args":["'"$RECIPIENT"'","5000"]}'
+
+peer chaincode invoke "${TARGET_TLS_OPTIONS[@]}" -C channeltest -n moneyAsset -c '{"function":"ClientAccountBalance","Args":[]}'
+peer chaincode invoke "${TARGET_TLS_OPTIONS[@]}" -C channeltest -n moneyAsset -c '{"function":"Transfer","Args":[ "'"$RECIPIENT"'","100"]}'
+peer chaincode query -C channeltest -n moneyAsset -c '{"function":"GetAllTransactions","Args":[]}'
+'''
+./network.sh down
+docker volume prune

@@ -31,13 +31,13 @@ services:
       - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
       # Peer specific variables
       - CORE_PEER_ID=peer0.org4.example.com
-      - CORE_PEER_ADDRESS=peer0.org4.example.com:15051
+      - CORE_PEER_ADDRESS=peer0.org4.example.com:12051
       - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
-      - CORE_PEER_LISTENADDRESS=0.0.0.0:15051
-      - CORE_PEER_CHAINCODEADDRESS=peer0.org4.example.com:15052
-      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:15052
-      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org4.example.com:15051
-      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org4.example.com:15051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:12051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.org4.example.com:12054
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:12054
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org4.example.com:12051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org4.example.com:12051
       - CORE_PEER_LOCALMSPID=Org4MSP
       - CORE_METRICS_PROVIDER=prometheus
       - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org1"}
@@ -48,6 +48,6 @@ services:
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
     command: peer node start
     ports:
-      - 15051:15051
+      - 12051:12051
     networks:
       - test

@@ -35,8 +35,8 @@ function addOrgFiles () {
     if [ ! -d "org${ORG}" ]; then
         mkdir org${ORG}
     fi
-    ADDRESS=$PORT_1
-    CHAINCODE_ADDRESS=$PORT_2
+    ADDRESS=$(($ORG+8))051
+    CHAINCODE_ADDRESS=$(($ORG+8))054
     echo "$(org_files_ccp $ORG $ADDRESS $CHAINCODE_ADDRESS orgTemplate/org-crypto.yaml)" > org${ORG}/org${ORG}-crypto.yaml
     echo "$(org_files_ccp $ORG $ADDRESS $CHAINCODE_ADDRESS orgTemplate/configtx.yaml)" > org${ORG}/configtx.yaml
     if [ ! -d "org${ORG}/compose" ]; then
@@ -84,8 +84,8 @@ function yaml_ccp {
 function generateCPP() {
     # Creates the files connection-orgX.json (from template ccp-template.json inside organizations/)
     # and connection-orgX.yaml (from template ccp-template.yaml inside organizations/) inside  organizations/peerOrganizations/orgX.example.com/
-    P0PORT=$PORT_1
-    CAPORT=$PORT_2
+    P0PORT=$(($ORG+8))051
+    CAPORT=$(($ORG+8))052
     PEERPEM=organizations/peerOrganizations/org${ORG}.example.com/tlsca/tlsca.org${ORG}.example.com-cert.pem
     CAPEM=organizations/peerOrganizations/org${ORG}.example.com/ca/ca.org${ORG}.example.com-cert.pem
 

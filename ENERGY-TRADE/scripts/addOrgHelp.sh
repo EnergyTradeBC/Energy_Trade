@@ -11,27 +11,30 @@ function addOrgHelp() {
   USAGE="$1"
   if [ "$USAGE" == "files" ]; then
     println "Usage: "
-    println "  addOrg.sh ${C_GREEN}files <Org> <Port 1> <Port 2>${C_RESET} [Flags]"
+    println "  addOrg.sh ${C_GREEN}files <Org>${C_RESET} [Flags]"
     println
     println "    Flags:"
     println
+    println "      -c - <channel name> - Name of channel to create (defaults to \"cer\")"
     println "      -h - Print this message"
   elif [ "$USAGE" == "add" ]; then
     println "Usage: "
-    println "  addOrg.sh ${C_GREEN}add <Org> <Port 1> <Port 2>${C_RESET} [Flags]"
+    println "  addOrg.sh ${C_GREEN}add <Org>${C_RESET} [Flags]"
     println
     println "    Flags:"
     println
+    println "      -c - <channel name> - Name of channel to create (defaults to \"cer\")"
     println "      -h - Print this message"
   else
     println "Usage: "
-    println "  addOrg.sh <Mode> <Org> <Port 1> <Port 2> [Flags]"
+    println "  addOrg.sh <Mode> <Org> [Flags]"
     println "    Modes:"
     println "      ${C_GREEN}files${C_RESET} - Create all the configuration files for the org"
     println "      ${C_GREEN}add${C_RESET} - Add the org to the network"
     println
     println "    Flags:"
     println
+    println "      -c - <channel name> - Name of channel to create (defaults to \"cer\")"
     println "      -h - Print this message"
   fi
 }

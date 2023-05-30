@@ -19,20 +19,6 @@ else
   	shift
 fi
 
-if [[ $# -lt 1 ]] ; then
-  	fatalln "Two ports required"
-else
-  	PORT_1=$1
-  	shift
-fi
-
-if [[ $# -lt 1 ]] ; then
-  	fatalln "Two ports required"
-else
-  	PORT_2=$1
-  	shift
-fi
-
 CONTAINER_CLI="docker"
 CONTAINER_CLI_COMPOSE="${CONTAINER_CLI}-compose"
 infoln "Using ${CONTAINER_CLI} and ${CONTAINER_CLI_COMPOSE}"
@@ -45,7 +31,7 @@ CLI_TIMEOUT=10
 #default for delay
 CLI_DELAY=3
 # channel name defaults to "mychannel"
-CHANNEL_NAME="CER"
+CHANNEL_NAME="cer"
 # use this as the docker compose couch file
 COMPOSE_FILE_COUCH_BASE=org${ORG}/compose/compose-couch-org${ORG}.yaml
 COMPOSE_FILE_COUCH_ORG=org${ORG}/compose/${CONTAINER_CLI}/${CONTAINER_CLI}-compose-couch-org${ORG}.yaml

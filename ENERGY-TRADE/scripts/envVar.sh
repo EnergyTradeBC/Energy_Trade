@@ -99,6 +99,29 @@ parsePeerConnectionParameters() {
   done
 }
 
+parsePeerConnectionParameters_v2() {
+  PEER_CONN_PARMS=()
+  PEERS=""
+  ORG_ARRAY=$1
+  for org in ${ORG_ARRAY[@]}; do
+    setGlobals $org
+    PEER="peer0.org$org"
+    ## Set peer addresses
+    if [ -z "$PEERS" ]
+    then
+	PEERS="$PEER"
+    else
+	PEERS="$PEERS $PEER"
+    fi
+    PEER_CONN_PARMS=("${PEER_CONN_PARMS[@]}" --peerAddresses $CORE_PEER_ADDRESS)
+    ## Set path to TLS certificate
+    CA=PEER0_ORG$org
+    CA+=_CA
+    TLSINFO=(--tlsRootCertFiles "${!CA}")
+    PEER_CONN_PARMS=("${PEER_CONN_PARMS[@]}" "${TLSINFO[@]}")
+  done
+}
+
 verifyResult() {
   if [ $1 -ne 0 ]; then
     fatalln "$2"

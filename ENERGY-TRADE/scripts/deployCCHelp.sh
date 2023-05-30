@@ -72,7 +72,7 @@ function deployCCHelp() {
         println "      -h - Print this message"
     elif [ "$USAGE" == "commitChaincodeDefinition" ]; then
         println "Usage: "
-        println "  deployCC.sh ${C_GREEN}commitChaincodeDefinition <Org1> <Org2> ..${C_RESET} [Flags]"
+        println "  deployCC.sh ${C_GREEN}commitChaincodeDefinition (<Org1> <Org2> ..) ${C_RESET} [Flags]"
         println
         println "    Flags:"
         println "      -c <channel name> - Name of the channel in which the chaincode definition will be committed (default to \"cer\")"
@@ -101,7 +101,7 @@ function deployCCHelp() {
         println "      -h - Print this message"
     elif [ "$USAGE" == "chaincodeInvokeInit" ]; then
         println "Usage: "
-        println "  deployCC.sh ${C_GREEN}chaincodeInvokeInit <Org1> <Org2> ..${C_RESET} [Flags]"
+        println "  deployCC.sh ${C_GREEN}chaincodeInvokeInit (<Org1> <Org2> ..) ${C_RESET} [Flags]"
         println
         println "    Flags:"
         println "      -c <channel name> - Name of the channel in which the chaincode will be invoked (default to \"cer\")"

@@ -103,7 +103,7 @@ function checkCommitReadiness() {
 
 # Commit the chaincode definition on the channel.
 function commitChaincodeDefinition() {
-    parsePeerConnectionParameters $@
+    parsePeerConnectionParameters_v2 $ORG_ARRAY
     res=$?
     verifyResult $res "Invoke transaction failed on channel '$CHANNEL_NAME' due to uneven number of peer and org parameters "
 
@@ -156,7 +156,7 @@ function queryCommitted() {
 # The chaincode must have the initLedger method defined
 
 function chaincodeInvokeInit() {
-    parsePeerConnectionParameters $@
+    parsePeerConnectionParameters $ORG_ARRAY
     res=$?
     verifyResult $res "Invoke transaction failed on channel '$CHANNEL_NAME' due to uneven number of peer and org parameters "
     

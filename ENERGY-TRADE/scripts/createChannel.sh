@@ -3,6 +3,7 @@
 # imports  
 . scripts/envVar.sh
 . scripts/utils.sh
+. scripts/actAsOrg.sh
 . scripts/createChannelHelp.sh
 . scripts/createChannelUtils.sh
 
@@ -16,6 +17,40 @@ if [[ $# -lt 1 ]] ; then
 else
   	MODE=$1
   	shift
+fi
+
+if [ "$MODE" == "updateConfig" ]; then
+	if [[ $# -lt 1 ]] ; then
+		createChannelHelp $MODE
+		exit 0
+	else
+		ORG=$1
+		shift
+	fi
+fi
+
+if [ "$MODE" == "signConfig" ]; then
+	if [[ $# -lt 2 ]] ; then
+		createChannelHelp $MODE
+		exit 0
+	else
+		ORG=$1
+		shift
+		AS_ORG=$1
+		shift
+	fi
+fi
+
+if [ "$MODE" == "submitConfig" ]; then
+	if [[ $# -lt 2 ]] ; then
+		createChannelHelp $MODE
+		exit 0
+	else
+		ORG=$1
+		shift
+		AS_ORG=$1
+		shift
+	fi
 fi
 
 if [ "$MODE" == "join" ]; then
@@ -88,8 +123,17 @@ elif [ "$MODE" == "create" ]; then
   	infoln "Creating channel ${CHANNEL_NAME}"
 	createChannel
   	successln "Channel '$CHANNEL_NAME' created"
+elif [ "$MODE" == "updateConfig" ]; then
+  	infoln "Updating config transaction to add org${ORG} to channel ${CHANNEL_NAME}"
+  	updateConfig
+elif [ "$MODE" == "signConfig" ]; then
+  	infoln "Signing config from org${AS_ORG} to add org${ORG} to channel ${CHANNEL_NAME}"
+  	signConfig
+elif [ "$MODE" == "submitConfig" ]; then
+  	infoln "Sumbitting config from org${AS_ORG} to add org${ORG} to channel ${CHANNEL_NAME}"
+  	submitConfig
 elif [ "$MODE" == "join" ]; then
-  	infoln "Joining ${ORG} peer to the channel..."
+  	infoln "Joining ${ORG} peer to channel ${CHANNEL_NAME}"
   	joinChannel
 elif [ "$MODE" == "anchor" ]; then
   	infoln "Setting anchor peer for org1..."

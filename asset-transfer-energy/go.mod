@@ -1,4 +1,4 @@
-module github.com/EnergyTradeBC/EnergyTrade/asset-transfer-energy
+module github.com/EnergyTradeBC/Energy_Trade/asset-transfer-energy
 
 go 1.17
 

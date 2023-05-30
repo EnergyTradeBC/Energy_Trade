@@ -62,10 +62,11 @@ else
             deployCCHelp $MODE
             exit 0
         else
-            ORG1=$1
-            shift
-            ORG2=$1
-            shift
+            ORG_ARRAY=()
+            while [[ $1 =~ ^-?[0-9]+$ ]]; do
+              ORG_ARRAY+=($1)
+              shift
+            done
         fi
     
     elif [ "$MODE" = "queryCommitted" ]; then
@@ -82,7 +83,7 @@ else
             deployCCHelp $MODE
             exit 0
         else
-            ORG=$1
+            ORG_ARRAY=$1
             shift
         fi
     fi
@@ -310,7 +311,7 @@ elif [ "$MODE" == "checkCommitReadiness" ]; then
 
 elif [ "$MODE" == "commitChaincodeDefinition" ]; then
     infoln "Committing the chaincode definition"
-    commitChaincodeDefinition $ORG1 $ORG2
+    commitChaincodeDefinition $ORG_ARRAY
 
 elif [ "$MODE" == "queryCommitted" ]; then
     infoln "Checking for successful definition commit"
@@ -320,7 +321,7 @@ elif [ "$MODE" == "chaincodeInvokeInit" ]; then
     if [ "$CC_INIT_FCN" = "NA" ]; then
         fatalln "No chaincode init function was provided."
     else
-        chaincodeInvokeInit $ORG1 $ORG2
+        chaincodeInvokeInit $ORG_ARRAY
     fi
 
 elif [ "$MODE" == "chaincodeQuery" ]; then

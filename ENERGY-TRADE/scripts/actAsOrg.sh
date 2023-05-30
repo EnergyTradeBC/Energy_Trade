@@ -1,5 +1,7 @@
 . scripts/utils.sh
 
+export ORDERER_CA=${PWD}/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
+
 actAsOrg() {
   local USING_ORG=""
   if [ -z "$OVERRIDE_ORG" ]; then
@@ -56,9 +58,10 @@ actAsOrgCLI() {
 parsePeerConnectionParameters() {
   PEER_CONN_PARMS=()
   PEERS=""
-  while [ "$#" -gt 0 ]; do
-    setGlobals $1
-    PEER="peer0.org$1"
+  ORG_ARRAY=$1
+  for org in ${ORG_ARRAY[@]}; do
+    actAsOrg $org
+    PEER="peer0.org$org"
     ## Set peer addresses
     if [ -z "$PEERS" ]
     then
@@ -67,12 +70,9 @@ parsePeerConnectionParameters() {
 	PEERS="$PEERS $PEER"
     fi
     PEER_CONN_PARMS=("${PEER_CONN_PARMS[@]}" --peerAddresses $CORE_PEER_ADDRESS)
-    ## Set path to TLS certificate
-    CA=PEER0_ORG$1_CA
-    TLSINFO=(--tlsRootCertFiles "${!CA}")
+
+    TLSINFO=(--tlsRootCertFiles "${!CORE_PEER_TLS_ROOTCERT_FILE}")
     PEER_CONN_PARMS=("${PEER_CONN_PARMS[@]}" "${TLSINFO[@]}")
-    # shift by one to get to the next organization
-    shift
   done
 }
 

@@ -2,7 +2,6 @@
 
 . scripts/utils.sh
 . scripts/deployCCHelp.sh
-. scripts/envVar.sh
 . scripts/actAsOrg.sh
 
 export PATH=${PWD}/../bin:$PATH
@@ -247,7 +246,7 @@ fi
 
 
 # import utils
-. scripts/envVar.sh
+#. scripts/envVar.sh
 . scripts/deployCCUtils.sh
 
 function checkPrereqs() {

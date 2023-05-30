@@ -1,0 +1,25 @@
+FATTO:
+
+    MOBILE APPLICATION INTERFACE AND COMMUNICATION:
+
+    SMART METER COMMUNICATION (MQTT):
+
+    LISTENER FOR BC TRANSACTIONS:
+
+    ENERGY CONTRACT:
+        - GetAllAssets
+        - CreateAsset
+        - ReadAsset
+        - TransferAsset
+
+    MONEY CONTRACT:
+
+    AUCTION CONTRACT:
+
+DA FARE:
+
+    ENERGY CONTRACT:
+        - UpdateAsset (lo facciamo anche nella application o non serve a nulla e viene utilizzato solo come conseguenza del transfer?)
+        - DeleteAsset (ogni 15 minuti generiamo un nuovo asset e cancelliamo il precedente, dopo aver registrato la quantità che è rimasta invenduta? è il modo più semplice
+                       di gestire la cosa a mio avviso => ogni 15 minuti, quindi prima di creare un nuovo asset o partecipare ad un'asta cancelliamo il precedente
+                       asset che quindi avrà sempre lo stesso ID, e.g. "energy<org_n>")

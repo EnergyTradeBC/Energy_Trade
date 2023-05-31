@@ -11,9 +11,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
+	"net/http"
 	"time"
 
+	mqtt "github.com/eclipse/paho.mqtt.golang"
+
+	"github.com/gin-gonic/gin"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 )
 
@@ -23,17 +26,45 @@ type NetworkConfig struct {
 	ChaincodeEnergyName string
 }
 
-// const (
-// 	mspID        = "Org1MSP"
-// 	cryptoPath   = "../../test-network/organizations/peerOrganizations/org1.example.com"
-// 	certPath     = cryptoPath + "/users/User1@org1.example.com/msp/signcerts/cert.pem"
-// 	keyPath      = cryptoPath + "/users/User1@org1.example.com/msp/keystore/"
-// 	tlsCertPath  = cryptoPath + "/peers/peer0.org1.example.com/tls/ca.crt"
-// 	peerEndpoint = "localhost:7051"
-// 	gatewayPeer  = "peer0.org1.example.com"
-// )
+type MQTTConfig struct {
+	broker   string
+	port     int
+	topic    string
+	clientID string
+	username string
+	password string
+}
 
 func main() {
+	// SETUP THE MQTT CONNECTION TO THE SMART METER
+	broker, port, topic, clientID, username, password := readMQTTConfig()
+
+	opts := mqtt.NewClientOptions()
+	opts.AddBroker(fmt.Sprintf("tcp://%s:%d", broker, port))
+	opts.SetClientID(clientID)
+	opts.SetUsername(username)
+	opts.SetPassword(password)
+	opts.SetDefaultPublishHandler(messagePubHandler)
+	opts.OnConnect = connectHandler
+	opts.OnConnectionLost = connectLostHandler
+	clientMQTT := mqtt.NewClient(opts)
+	if token := clientMQTT.Connect(); token.Wait() && token.Error() != nil {
+		panic(token.Error())
+	}
+
+	// Subscribe to the smart meter's topic
+	sub_topic(clientMQTT, topic)
+
+	// SETUP THE REST INTERFACE
+	router := gin.Default()
+	router.GET("/primo_get", getPRIMO)
+	router.GET("/secondo_get", getSECONDO)
+
+	router.POST("/primo_post", postPRIMO)
+	router.POST("/secondo_post", postSECONDO)
+
+	router.Run("localhost:8080")
+
 	// The gRPC client connection should be shared by all Gateway connections to this endpoint
 	clientConnection := newGrpcConnection()
 	defer clientConnection.Close()
@@ -57,20 +88,10 @@ func main() {
 	}
 	defer gw.Close()
 
+	// Read network information from a json file
 	channelName, chaincodeMoneyName, chaincodeEnergyName := readNetworkConfig()
 
-	if cc_money_name := os.Getenv("CHAINCODE_MONEY_NAME"); cc_money_name != "" {
-		chaincodeMoneyName = cc_money_name
-	}
-
-	if cc_energy_name := os.Getenv("CHAINCODE_ENERGY_NAME"); cc_energy_name != "" {
-		chaincodeEnergyName = cc_energy_name
-	}
-
-	if cname := os.Getenv("CHANNEL_NAME"); cname != "" {
-		channelName = cname
-	}
-
+	// Get network and smart contract objects
 	network := gw.GetNetwork(channelName)
 	contract_money := network.GetContract(chaincodeMoneyName)
 	contract_energy := network.GetContract(chaincodeEnergyName)
@@ -99,72 +120,21 @@ func readNetworkConfig() (string, string, string) {
 	return payload.ChannelName, payload.ChaincodeMoneyName, payload.ChaincodeEnergyName
 }
 
-// // newGrpcConnection creates a gRPC connection to the Gateway server.
-// func newGrpcConnection() *grpc.ClientConn {
-// 	certificate, err := loadCertificate(tlsCertPath)
-// 	if err != nil {
-// 		panic(err)
-// 	}
+// Reads from a json the broker, port and topic to perform MQTT communications
+func readMQTTConfig() (string, int, string, string, string, string) {
+	content, err := ioutil.ReadFile("./mqtt_config.json")
+	if err != nil {
+		panic(fmt.Errorf("Error when opening file: %w", err))
+	}
 
-// 	certPool := x509.NewCertPool()
-// 	certPool.AddCert(certificate)
-// 	transportCredentials := credentials.NewClientTLSFromCert(certPool, gatewayPeer)
+	var payload MQTTConfig
+	err = json.Unmarshal(content, &payload)
+	if err != nil {
+		panic(fmt.Errorf("Error during Unmarshal(): %w", err))
+	}
 
-// 	connection, err := grpc.Dial(peerEndpoint, grpc.WithTransportCredentials(transportCredentials))
-// 	if err != nil {
-// 		panic(fmt.Errorf("failed to create gRPC connection: %w", err))
-// 	}
-
-// 	return connection
-// }
-
-// // newIdentity creates a client identity for this Gateway connection using an X.509 certificate.
-// func newIdentity() *identity.X509Identity {
-// 	certificate, err := loadCertificate(certPath)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	id, err := identity.NewX509Identity(mspID, certificate)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	return id
-// }
-
-// func loadCertificate(filename string) (*x509.Certificate, error) {
-// 	certificatePEM, err := os.ReadFile(filename)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to read certificate file: %w", err)
-// 	}
-// 	return identity.CertificateFromPEM(certificatePEM)
-// }
-
-// // newSign creates a function that generates a digital signature from a message digest using a private key.
-// func newSign() identity.Sign {
-// 	files, err := os.ReadDir(keyPath)
-// 	if err != nil {
-// 		panic(fmt.Errorf("failed to read private key directory: %w", err))
-// 	}
-// 	privateKeyPEM, err := os.ReadFile(path.Join(keyPath, files[0].Name()))
-
-// 	if err != nil {
-// 		panic(fmt.Errorf("failed to read private key file: %w", err))
-// 	}
-
-// 	privateKey, err := identity.PrivateKeyFromPEM(privateKeyPEM)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	sign, err := identity.NewPrivateKeySign(privateKey)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	return sign
-// }
+	return payload.broker, payload.port, payload.topic, payload.clientID, payload.username, payload.password
+}
 
 // FUNCTIONS TO MANAGE THE ENERGY CONTRACT
 
@@ -228,6 +198,18 @@ func transferAssetAsync(contract *client.Contract, asset_ID string, newOwner_ID 
 	fmt.Printf("*** Transaction committed successfully\n")
 }
 
+// Submit a transaction synchronously, blocking until it has been committed to the ledger.
+func deleteEnergyAsset(contract *client.Contract, asset_ID string) {
+	fmt.Printf("\n--> Submit Transaction: DeleteEnergyAsset, deletes an energy asset using its asset_ID \n")
+
+	_, err := contract.SubmitTransaction("DeleteAsset", asset_ID)
+	if err != nil {
+		panic(fmt.Errorf("failed to submit transaction: %w", err))
+	}
+
+	fmt.Printf("*** Transaction committed successfully\n")
+}
+
 // Format JSON data
 func formatJSON(data []byte) string {
 	var prettyJSON bytes.Buffer
@@ -235,4 +217,77 @@ func formatJSON(data []byte) string {
 		panic(fmt.Errorf("failed to parse JSON: %w", err))
 	}
 	return prettyJSON.String()
+}
+
+// MQTT UTILS HANDLERS
+
+var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
+	fmt.Printf("Received message: %s from topic: %s\n", msg.Payload(), msg.Topic())
+}
+
+var connectHandler mqtt.OnConnectHandler = func(client mqtt.Client) {
+	fmt.Println("Connected")
+}
+
+// (communicates an error to mobile application?)
+var connectLostHandler mqtt.ConnectionLostHandler = func(client mqtt.Client, err error) {
+	fmt.Printf("Connect lost: %v", err)
+}
+
+// REST FUNCTIONS (GET ad POST)
+
+type inputPOSTprimo struct {
+}
+
+type inputPOSTsecondo struct {
+}
+
+type outputGETprimo struct {
+}
+
+type outputGETsecondo struct {
+}
+
+// getPRIMO responds with
+func getPRIMO(c *gin.Context) {
+	var output outputGETprimo
+
+	c.IndentedJSON(http.StatusOK, output)
+}
+
+// getSECONDO responds with
+func getSECONDO(c *gin.Context) {
+	var output outputGETsecondo
+
+	c.IndentedJSON(http.StatusOK, output)
+}
+
+// postPRIMO ... from JSON received in the request body.
+func postPRIMO(c *gin.Context) {
+	var input inputPOSTprimo
+
+	// Call BindJSON to bind the received JSON to input
+	if err := c.BindJSON(&input); err != nil {
+		return
+	}
+
+	// Add the new album to the slice.
+	// albums = append(albums, newAlbum)
+
+	c.IndentedJSON(http.StatusCreated, input)
+}
+
+// postSECONDO ... from JSON received in the request body.
+func postSECONDO(c *gin.Context) {
+	var input inputPOSTsecondo
+
+	// Call BindJSON to bind the received JSON to input
+	if err := c.BindJSON(&input); err != nil {
+		return
+	}
+
+	// Add the new album to the slice.
+	// albums = append(albums, newAlbum)
+
+	c.IndentedJSON(http.StatusCreated, input)
 }

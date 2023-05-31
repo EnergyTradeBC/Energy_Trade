@@ -1,0 +1,8 @@
+{
+    "broker": "broker.emqx.io",
+    "ip": 1883, 
+    "topic": "",
+    "clientID": "",
+    "username": "",
+    "password": ""
+}

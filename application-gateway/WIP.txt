@@ -1,8 +1,12 @@
 FATTO:
 
-    MOBILE APPLICATION INTERFACE AND COMMUNICATION:
+    MOBILE APPLICATION INTERFACE AND COMMUNICATION (REST):
+        - created the structure for 2 different GET Aìand POST functions
+        - created association between the functions and specific endpoints
 
     SMART METER COMMUNICATION (MQTT):
+        - import paho.mqtt
+        - mqtt communication management (connect, subscribe, ..) [info: https://www.emqx.com/en/blog/how-to-use-mqtt-in-golang]
 
     LISTENER FOR BC TRANSACTIONS:
 
@@ -11,6 +15,10 @@ FATTO:
         - CreateAsset
         - ReadAsset
         - TransferAsset
+        - DeleteAsset (ogni 15 minuti generiamo un nuovo asset e cancelliamo il precedente: è il modo più semplice di gestire la cosa a mio avviso 
+                       => ogni 15 minuti, quindi prima di creare un nuovo asset o partecipare ad un'asta, prima viene fatto un ReadAsset per 
+                       registrare le informazioni sul precedente asset rimasto invenduto (se c'è) e poi cancelliamo il precedente
+                       asset, che quindi avrà sempre lo stesso ID, e.g. "energy_<org_n>")
 
     MONEY CONTRACT:
 
@@ -20,6 +28,10 @@ DA FARE:
 
     ENERGY CONTRACT:
         - UpdateAsset (lo facciamo anche nella application o non serve a nulla e viene utilizzato solo come conseguenza del transfer?)
-        - DeleteAsset (ogni 15 minuti generiamo un nuovo asset e cancelliamo il precedente, dopo aver registrato la quantità che è rimasta invenduta? è il modo più semplice
-                       di gestire la cosa a mio avviso => ogni 15 minuti, quindi prima di creare un nuovo asset o partecipare ad un'asta cancelliamo il precedente
-                       asset che quindi avrà sempre lo stesso ID, e.g. "energy<org_n>")
+
+    SMART METER COMMUNICATION (MQTT):
+        - logic of action after receiveng a message from the smart meter topic (format of the message?)
+
+    MOBILE APPLICATION INTERFACE AND COMMUNICATION (REST):
+        - binding POST and GET functions with real needed functions (addMoney? Altri?)
+        - management of inputs in POST funcs and outputs in GET funcs

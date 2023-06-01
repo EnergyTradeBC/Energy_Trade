@@ -8,6 +8,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -21,9 +22,10 @@ import (
 )
 
 type NetworkConfig struct {
-	ChannelName         string
-	ChaincodeMoneyName  string
-	ChaincodeEnergyName string
+	ChannelName          string
+	ChaincodeMoneyName   string
+	ChaincodeEnergyName  string
+	ChaincodeAuctionName string
 }
 
 type MQTTConfig struct {
@@ -73,7 +75,7 @@ func main() {
 	sign := newSign()
 
 	// Create a Gateway connection for a specific client identity
-	gw, err := client.Connect(
+	gateway, err := client.Connect(
 		id,
 		client.WithSign(sign),
 		client.WithClientConnection(clientConnection),
@@ -86,15 +88,25 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer gw.Close()
+	defer gateway.Close()
 
 	// Read network information from a json file
-	channelName, chaincodeMoneyName, chaincodeEnergyName := readNetworkConfig()
+	channelName, chaincodeMoneyName, chaincodeEnergyName, chaincodeAuctionName := readNetworkConfig()
 
 	// Get network and smart contract objects
-	network := gw.GetNetwork(channelName)
+	network := gateway.GetNetwork(channelName)
 	contract_money := network.GetContract(chaincodeMoneyName)
 	contract_energy := network.GetContract(chaincodeEnergyName)
+	contract_auction := network.GetContract(chaincodeAuctionName)
+
+	// Context used for event listening
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Listen for events emitted by subsequent transactions
+	startMoneyChaincodeEventListening(ctx, network, chaincodeMoneyName)
+	startEnergyChaincodeEventListening(ctx, network, chaincodeEnergyName)
+	startAuctionChaincodeEventListening(ctx, network, chaincodeAuctionName)
 
 	for true {
 
@@ -105,7 +117,7 @@ func main() {
 // UTILITY FUNCTIONS
 
 // Reads from a json the channel name and the name of the chaincodes committed to that channel
-func readNetworkConfig() (string, string, string) {
+func readNetworkConfig() (string, string, string, string) {
 	content, err := ioutil.ReadFile("./network_config.json")
 	if err != nil {
 		panic(fmt.Errorf("Error when opening file: %w", err))
@@ -117,7 +129,7 @@ func readNetworkConfig() (string, string, string) {
 		panic(fmt.Errorf("Error during Unmarshal(): %w", err))
 	}
 
-	return payload.ChannelName, payload.ChaincodeMoneyName, payload.ChaincodeEnergyName
+	return payload.ChannelName, payload.ChaincodeMoneyName, payload.ChaincodeEnergyName, payload.ChaincodeAuctionName
 }
 
 // Reads from a json the broker, port and topic to perform MQTT communications

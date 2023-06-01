@@ -1,5 +1,6 @@
 {
     "channelName": "channeltest",
     "chaincodeMoneyName": "chaincodetestmoney",
-    "chaincodeEnergyName": "chaincodetestenergy"
+    "chaincodeEnergyName": "chaincodetestenergy",
+    "chaincodeAuctionName": "chaincodeAuctionName"
 }

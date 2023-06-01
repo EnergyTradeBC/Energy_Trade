@@ -9,6 +9,8 @@ FATTO:
         - mqtt communication management (connect, subscribe, ..) [info: https://www.emqx.com/en/blog/how-to-use-mqtt-in-golang]
 
     LISTENER FOR BC TRANSACTIONS:
+        - structure for chaincode events listener
+        - structure for channel blocks listener
 
     ENERGY CONTRACT:
         - GetAllAssets
@@ -26,12 +28,17 @@ FATTO:
 
 DA FARE:
 
-    ENERGY CONTRACT:
-        - UpdateAsset (lo facciamo anche nella application o non serve a nulla e viene utilizzato solo come conseguenza del transfer?)
+    MOBILE APPLICATION INTERFACE AND COMMUNICATION (REST):
+        - binding POST and GET functions with real needed functions (addMoney? Altri?)
+        - management of inputs in POST funcs and outputs in GET funcs
 
     SMART METER COMMUNICATION (MQTT):
         - logic of action after receiveng a message from the smart meter topic (format of the message?)
 
-    MOBILE APPLICATION INTERFACE AND COMMUNICATION (REST):
-        - binding POST and GET functions with real needed functions (addMoney? Altri?)
-        - management of inputs in POST funcs and outputs in GET funcs
+    LISTENER FOR BC TRANSACTIONS:
+        - try to understand how to manage formats of the block events (HEADER, DATA and METADATA) (if necessary)
+        - look to the chaincode events structure and content (Payload)
+        - logic of action after receiveng a chaincode event (for MONEY, ENERGY and AUCTION) (how we will manage the last transactions of the auction?)
+
+    ENERGY CONTRACT:
+        - UpdateAsset (lo facciamo anche nella application o non serve a nulla e viene utilizzato solo come conseguenza del transfer?)

@@ -48,7 +48,6 @@ actAsOrgCLI() {
         export CORE_PEER_ADDRESS=peer0.org2.example.com:9051
     else
         export CORE_PEER_ADDRESS=peer0.org${ORG}.example.com:$((${USING_ORG}+8))051
-        echo $CORE_PEER_ADDRESS
   fi
 }
 

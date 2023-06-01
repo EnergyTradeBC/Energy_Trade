@@ -15,7 +15,7 @@ FATTO:
     ENERGY CONTRACT:
         - GetAllAssets
         - CreateAsset
-        - ReadAsset
+        - ReadAsset ==> qual è il formato dell'output? come lo posso gestire per ottenere le informazioni che desidero (quantità rimanente)
         - TransferAsset
         - DeleteAsset (ogni 15 minuti generiamo un nuovo asset e cancelliamo il precedente: è il modo più semplice di gestire la cosa a mio avviso 
                        => ogni 15 minuti, quindi prima di creare un nuovo asset o partecipare ad un'asta, prima viene fatto un ReadAsset per 

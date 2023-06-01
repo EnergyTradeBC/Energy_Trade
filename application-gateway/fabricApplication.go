@@ -21,6 +21,11 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 )
 
+var assetID = "energy_1"
+var contract_money *client.Contract
+var contract_energy *client.Contract
+var contract_auction *client.Contract
+
 type NetworkConfig struct {
 	ChannelName          string
 	ChaincodeMoneyName   string
@@ -35,6 +40,11 @@ type MQTTConfig struct {
 	clientID string
 	username string
 	password string
+}
+
+type MQTTmessage struct {
+	ProducedEnergy float64
+	ConsumedEnergy float64
 }
 
 func main() {
@@ -95,9 +105,10 @@ func main() {
 
 	// Get network and smart contract objects
 	network := gateway.GetNetwork(channelName)
-	contract_money := network.GetContract(chaincodeMoneyName)
-	contract_energy := network.GetContract(chaincodeEnergyName)
-	contract_auction := network.GetContract(chaincodeAuctionName)
+	// Update the global variable defined in the package scope
+	contract_money = network.GetContract(chaincodeMoneyName)
+	contract_energy = network.GetContract(chaincodeEnergyName)
+	contract_auction = network.GetContract(chaincodeAuctionName)
 
 	// Context used for event listening
 	ctx, cancel := context.WithCancel(context.Background())
@@ -174,6 +185,9 @@ func readEnergyAssetByID(contract *client.Contract, asset_ID string) {
 	result := formatJSON(evaluateResult)
 
 	fmt.Printf("*** Result:%s\n", result)
+
+	// return result  ==> ritorno una stringa o per esempio una struct specifica?
+	// 					  se invece il risultato è negativo, ovvero non esiste un asset con quell'ID, come si comporta?
 }
 
 // Submit a transaction synchronously, blocking until it has been committed to the ledger.
@@ -235,6 +249,33 @@ func formatJSON(data []byte) string {
 
 var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
 	fmt.Printf("Received message: %s from topic: %s\n", msg.Payload(), msg.Topic())
+
+	var message MQTTmessage
+	err := json.Unmarshal(msg.Payload(), &message)
+	if err != nil {
+		panic(fmt.Errorf("Error during Unmarshal(): %w", err))
+	}
+
+	readEnergyAssetByID(contract_energy, assetID)
+	// Prendo l'output: se assetID non esiste allora stop e vado avanti
+	//					se assetID esiste invece, registro la quantità rimanente e poi chiamo il delete
+	// if <asset-esiste> {
+	//		salvo la quantità da qualche parte ed eventualmente la invio a chi di dovere
+	deleteEnergyAsset(contract_energy, assetID)
+	// }
+
+	if message.ProducedEnergy > message.ConsumedEnergy {
+		production_excess := message.ProducedEnergy - message.ConsumedEnergy
+		s_excess := fmt.Sprintf("%v", production_excess)
+
+		createEnergyAsset(contract_energy, assetID, s_excess)
+
+		// Prima creo l'asset e poi indico l'asta
+	} else if message.ProducedEnergy < message.ConsumedEnergy {
+		consumption_excess := message.ConsumedEnergy - message.ProducedEnergy
+
+		// Devo far sapere in qualche modo al listener dell'asta quanta energia ho bisogno di comprare (variabile globale?)
+	}
 }
 
 var connectHandler mqtt.OnConnectHandler = func(client mqtt.Client) {

@@ -22,6 +22,9 @@ import (
 )
 
 var assetID = "energy_1"
+var orgMSP = "Org1MSP"
+var auctionID = "auction_1"
+var bidTransactionID = ""
 var contract_money *client.Contract
 var contract_energy *client.Contract
 var contract_auction *client.Contract
@@ -159,83 +162,6 @@ func readMQTTConfig() (string, int, string, string, string, string) {
 	return payload.broker, payload.port, payload.topic, payload.clientID, payload.username, payload.password
 }
 
-// FUNCTIONS TO MANAGE THE ENERGY CONTRACT
-
-// Evaluate a transaction to query ledger state.
-func getAllEnergyAssets(contract *client.Contract) {
-	fmt.Println("\n--> Evaluate Transaction: GetAllEnergyAssets, function returns all the current energy assets on the ledger")
-
-	evaluateResult, err := contract.EvaluateTransaction("GetAllAssets")
-	if err != nil {
-		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
-	}
-	result := formatJSON(evaluateResult)
-
-	fmt.Printf("*** Result:%s\n", result)
-}
-
-// Evaluate a transaction by assetID to query ledger state.
-func readEnergyAssetByID(contract *client.Contract, asset_ID string) {
-	fmt.Printf("\n--> Evaluate Transaction: ReadAsset, function returns asset attributes\n")
-
-	evaluateResult, err := contract.EvaluateTransaction("ReadAsset", asset_ID)
-	if err != nil {
-		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
-	}
-	result := formatJSON(evaluateResult)
-
-	fmt.Printf("*** Result:%s\n", result)
-
-	// return result  ==> ritorno una stringa o per esempio una struct specifica?
-	// 					  se invece il risultato è negativo, ovvero non esiste un asset con quell'ID, come si comporta?
-}
-
-// Submit a transaction synchronously, blocking until it has been committed to the ledger.
-func createEnergyAsset(contract *client.Contract, asset_ID string, quantity string) {
-	fmt.Printf("\n--> Submit Transaction: CreateEnergyAsset, creates new energy asset with asset_ID and quantity arguments \n")
-
-	_, err := contract.SubmitTransaction("CreateAsset", asset_ID, quantity)
-	if err != nil {
-		panic(fmt.Errorf("failed to submit transaction: %w", err))
-	}
-
-	fmt.Printf("*** Transaction committed successfully\n")
-}
-
-// Submit transaction asynchronously, blocking until the transaction has been sent to the orderer, and allowing
-// this thread to process the chaincode response (e.g. update a UI) without waiting for the commit notification
-func transferAssetAsync(contract *client.Contract, asset_ID string, newOwner_ID string, transfer_quantity string) {
-	fmt.Printf("\n--> Async Submit Transaction: TransferAsset, transfer part or the entire energy asset to a new owner")
-
-	submitResult, commit, err := contract.SubmitAsync("TransferAsset", client.WithArguments(asset_ID, newOwner_ID, transfer_quantity))
-	if err != nil {
-		panic(fmt.Errorf("failed to submit transaction asynchronously: %w", err))
-	}
-
-	fmt.Printf("\n*** Successfully submitted transaction to transfer ownership from %s to Mark. \n", string(submitResult))
-	fmt.Println("*** Waiting for transaction commit.")
-
-	if commitStatus, err := commit.Status(); err != nil {
-		panic(fmt.Errorf("failed to get commit status: %w", err))
-	} else if !commitStatus.Successful {
-		panic(fmt.Errorf("transaction %s failed to commit with status: %d", commitStatus.TransactionID, int32(commitStatus.Code)))
-	}
-
-	fmt.Printf("*** Transaction committed successfully\n")
-}
-
-// Submit a transaction synchronously, blocking until it has been committed to the ledger.
-func deleteEnergyAsset(contract *client.Contract, asset_ID string) {
-	fmt.Printf("\n--> Submit Transaction: DeleteEnergyAsset, deletes an energy asset using its asset_ID \n")
-
-	_, err := contract.SubmitTransaction("DeleteAsset", asset_ID)
-	if err != nil {
-		panic(fmt.Errorf("failed to submit transaction: %w", err))
-	}
-
-	fmt.Printf("*** Transaction committed successfully\n")
-}
-
 // Format JSON data
 func formatJSON(data []byte) string {
 	var prettyJSON bytes.Buffer
@@ -247,6 +173,7 @@ func formatJSON(data []byte) string {
 
 // MQTT UTILS HANDLERS
 
+// Receives the message from the smart meter and perform some actions
 var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
 	fmt.Printf("Received message: %s from topic: %s\n", msg.Payload(), msg.Topic())
 
@@ -256,19 +183,19 @@ var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Me
 		panic(fmt.Errorf("Error during Unmarshal(): %w", err))
 	}
 
-	readEnergyAssetByID(contract_energy, assetID)
+	readEnergyAssetByID(contract_energy)
 	// Prendo l'output: se assetID non esiste allora stop e vado avanti
 	//					se assetID esiste invece, registro la quantità rimanente e poi chiamo il delete
 	// if <asset-esiste> {
 	//		salvo la quantità da qualche parte ed eventualmente la invio a chi di dovere
-	deleteEnergyAsset(contract_energy, assetID)
+	deleteEnergyAsset(contract_energy)
 	// }
 
 	if message.ProducedEnergy > message.ConsumedEnergy {
 		production_excess := message.ProducedEnergy - message.ConsumedEnergy
 		s_excess := fmt.Sprintf("%v", production_excess)
 
-		createEnergyAsset(contract_energy, assetID, s_excess)
+		createEnergyAsset(contract_energy, s_excess)
 
 		// Prima creo l'asset e poi indico l'asta
 	} else if message.ProducedEnergy < message.ConsumedEnergy {

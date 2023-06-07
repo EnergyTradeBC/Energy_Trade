@@ -25,6 +25,14 @@ FATTO:
     MONEY CONTRACT:
 
     AUCTION CONTRACT:
+        - queryAuctionByID
+        - queryBidByID
+        - createAuction
+        - makeBid
+        - submitBid
+        - closeAuction
+        - revealBid
+        - endAuction
 
 DA FARE:
 

@@ -117,7 +117,7 @@ func (s *SmartContract) Mint(ctx contractapi.TransactionContextInterface, recipi
 		return err
 	}
 
-	// Transfer tokens from minter to recipient
+	// Emit the Transfer event
 	timestamp := time.Now().Format(time.RFC3339)
 	transferEvent := event{minter, recipient, amount, timestamp}
 	transferEventJSON, err := json.Marshal(transferEvent)

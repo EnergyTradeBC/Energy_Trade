@@ -21,9 +21,14 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 )
 
-var assetID = "energy_1"
-var orgMSP = "Org1MSP"
-var auctionID = "auction_1"
+const assetID = "energy_1"
+const orgMSP = "Org1MSP"
+const auctionID = "auction_1"
+
+const moneyName = ""
+const moneySymbol = ""
+const moneyDecimals = ""
+
 var bidTransactionID = ""
 var contract_money *client.Contract
 var contract_energy *client.Contract

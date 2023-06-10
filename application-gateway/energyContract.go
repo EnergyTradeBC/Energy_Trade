@@ -6,6 +6,7 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 )
 
+// Retrieves all the energy assets present on the ledger.
 func getAllEnergyAssets(contract *client.Contract) {
 	fmt.Println("\n--> Evaluate Transaction: GetAllEnergyAssets, function returns all the current energy assets on the ledger")
 
@@ -19,7 +20,7 @@ func getAllEnergyAssets(contract *client.Contract) {
 	fmt.Printf("*** Result:%s\n", result)
 }
 
-// Evaluate a transaction by assetID to query ledger state.
+// Retrieves the asset, if existing, with the assetID.
 func readEnergyAssetByID(contract *client.Contract) {
 	fmt.Printf("\n--> Evaluate Transaction: ReadAsset, function returns asset attributes\n")
 
@@ -37,6 +38,7 @@ func readEnergyAssetByID(contract *client.Contract) {
 }
 
 // Submit a transaction synchronously, blocking until it has been committed to the ledger.
+// Creates a new asset with <assetID> and quantity received as input
 func createEnergyAsset(contract *client.Contract, quantity string) {
 	fmt.Printf("\n--> Submit Transaction: CreateEnergyAsset, creates new energy asset with asset_ID and quantity arguments \n")
 
@@ -55,7 +57,8 @@ func createEnergyAsset(contract *client.Contract, quantity string) {
 
 // Submit transaction asynchronously, blocking until the transaction has been sent to the orderer, and allowing
 // this thread to process the chaincode response (e.g. update a UI) without waiting for the commit notification
-func transferAssetAsync(contract *client.Contract, newOwner_ID string, transfer_quantity string) {
+// Transfers a specific quantity of an asset to a new owner with <newOwner_ID>
+func transferEnergyAssetAsync(contract *client.Contract, newOwner_ID string, transfer_quantity string) {
 	fmt.Printf("\n--> Async Submit Transaction: TransferAsset, transfer part or the entire energy asset to a new owner")
 
 	submitResult, commit, err := contract.SubmitAsync("TransferAsset",
@@ -78,6 +81,7 @@ func transferAssetAsync(contract *client.Contract, newOwner_ID string, transfer_
 }
 
 // Submit a transaction synchronously, blocking until it has been committed to the ledger.
+// Deletes the asse twith <assetID>
 func deleteEnergyAsset(contract *client.Contract) {
 	fmt.Printf("\n--> Submit Transaction: DeleteEnergyAsset, deletes an energy asset using its asset_ID \n")
 

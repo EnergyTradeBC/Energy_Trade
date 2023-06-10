@@ -8,31 +8,56 @@ FATTO:
         - import paho.mqtt
         - mqtt communication management (connect, subscribe, ..) [info: https://www.emqx.com/en/blog/how-to-use-mqtt-in-golang]
 
-    LISTENER FOR BC TRANSACTIONS:
+        AFTER RECEPTION:
+            - balance is NEGATIVE: starts the "AUCTION CONTRACT LISTENER" for "createAuction"
+            - balance is POSITIVE: triggers "createAuction"
+
+    LISTENER FOR BC EVENTS:
+
+        AUCTION CONTRACT LISTENER: 
+
+            BIDDER POV:
+                - listener for "createAuction" => if the quantity sold and the starting bid match the decided <criterion> triggers "makeBid" and "submitBid"
+                                                and stops the "AUCTION EVENT LISTENER" for "createAuction". 
+                                                Starts the "AUCTION EVENT LISTENER" for "closeAuction". 
+                - listener for "closeAuction" => triggers "revealBid" and stops the "AUCTION EVENT LISTENER" for "closeAuction".
+                                                 Starts the "AUCTION EVENT LISTENER" for "endAuction".
+                - listener for "endAuction" =>  stops the "AUCTION EVENT LISTENER" for "endAuction" and checks the ID of the winner
+                                                if clientID and ID of the WINNER match => 
+                                                    - if we decide to transfer the money first, send the money established 
+                                                    - else starts the "ASSET CONTRACT LISTENER" for "transferEnergyAssetAsync"
+                                                else starts "AUCTION CONTRACT LISTENER" for "createAuction"
+                                                                           
         - structure for chaincode events listener
         - structure for channel blocks listener
 
     ENERGY CONTRACT:
-        - GetAllAssets
-        - CreateAsset
-        - ReadAsset ==> qual è il formato dell'output? come lo posso gestire per ottenere le informazioni che desidero (quantità rimanente)
-        - TransferAsset
-        - DeleteAsset (ogni 15 minuti generiamo un nuovo asset e cancelliamo il precedente: è il modo più semplice di gestire la cosa a mio avviso 
-                       => ogni 15 minuti, quindi prima di creare un nuovo asset o partecipare ad un'asta, prima viene fatto un ReadAsset per 
-                       registrare le informazioni sul precedente asset rimasto invenduto (se c'è) e poi cancelliamo il precedente
-                       asset, che quindi avrà sempre lo stesso ID, e.g. "energy_<org_n>")
+        - getAllEnergyAssets
+        - readEnergyAssetByID ==> qual è il formato dell'output? come lo posso gestire per ottenere le informazioni che desidero (quantità rimanente)
+        - createEnergyAsset
+        - transferEnergyAssetAsync ==> è necessario che sia async?
+        - deleteEnergyAsset (ogni 15 minuti generiamo un nuovo asset e cancelliamo il precedente: è il modo più semplice di gestire la cosa a mio avviso 
+                            => ogni 15 minuti, quindi prima di creare un nuovo asset o partecipare ad un'asta, prima viene fatto un ReadAsset per 
+                            registrare le informazioni sul precedente asset rimasto invenduto (se c'è) e poi cancelliamo il precedente
+                            asset, che quindi avrà sempre lo stesso ID, e.g. "energy_<org_n>")
 
     MONEY CONTRACT:
+        - initializeMoneyContract
+        - getAccountID
+        - getAccountBalance
+        - mintAndTransfer
+        - transferMoney
 
     AUCTION CONTRACT:
         - queryAuctionByID
         - queryBidByID
-        - createAuction
+        - createAuction => set a timer for calling "closeAuction" (leave enough time to make and submit the bids)
         - makeBid
         - submitBid
-        - closeAuction
+        - closeAuction => set a timer for calling "endAuction" (leave enough time to reveal the bids)
         - revealBid
-        - endAuction
+        - endAuction => - if we decided to send the asset first, transfer the quantity of asset established in the auction to the winner (using "queryAuctionByID")
+                        - else starts the "MONEY CONTRACT LISTENER" for "transferMoney"
 
 DA FARE:
 
@@ -43,10 +68,23 @@ DA FARE:
     SMART METER COMMUNICATION (MQTT):
         - logic of action after receiveng a message from the smart meter topic (format of the message?)
 
-    LISTENER FOR BC TRANSACTIONS:
+    LISTENER FOR BC EVENTS:
+
+        MONEY CONTRACT LISTENER:
+            - listener for "transferMoney" event => if the quantity of money received match the quantity decided in the auction it 
+                                                    triggers "transferEnergyAssetAsync" which transfer the asset sold in the auction
+              !!! THE TRANSFERMONEY EVENT MUST BE AT LEAST HASHED (they can be easily retrieved by the other part of the transaction who 
+                                                                   knows both the IDs and the money quantity) !!!
+            - stops the "MONEY CONTRACT LISTENER" for "transferMoney"
+
+        < o viene fatto il listener sui soldi o sull'asset, fanno la stessa cosa ma uno suppone che venga prima mandato l'asset mnetre l'altro il denaro > 
+
+        ASSET CONTRACT LISTENER:
+            - listener for "transferEnergyAssetAsync" event => if the quantity of the asset received match the quantity decided in the auction it 
+                                                               triggers "transferMoney" which transfer the quantity of money set in the auction
+            - stops the "ASSET CONTRACT LISTENER" for "transferEnergyAssetAsync"
+
         - try to understand how to manage formats of the block events (HEADER, DATA and METADATA) (if necessary)
-        - look to the chaincode events structure and content (Payload)
-        - logic of action after receiveng a chaincode event (for MONEY, ENERGY and AUCTION) (how we will manage the last transactions of the auction?)
 
     ENERGY CONTRACT:
         - UpdateAsset (lo facciamo anche nella application o non serve a nulla e viene utilizzato solo come conseguenza del transfer?)

@@ -8,7 +8,7 @@ import (
 
 // Initializes the money smart contract passing 3 settings (name, symbol and decimals).
 // Can be used only by the org that will behave as the central banker
-func initializeMoneyContract(contract *client.Contract, quantity string) {
+func initializeMoneyContract(contract *client.Contract) {
 	fmt.Printf("\n--> Submit Transaction: initializeMoneyContract, initializes the money contract with 'name', 'symbol' and 'decimals' \n")
 
 	_, err := contract.Submit("Initialize",
@@ -54,13 +54,13 @@ func getAccountBalance(contract *client.Contract) string {
 	return result
 }
 
-// Creates <amount> of new tokens and then transfers them to the recipient (clientID of the recipient).
+// Creates <amount> of new tokens.
 // Can be used only by the org that will behave as the central banker
-func mintAndTransfer(contract *client.Contract, recipientID string, amount string) {
-	fmt.Printf("\n--> Submit Transaction: mintAndTransfer, creates new tokens and transfers them to the recipient \n")
+func mint(contract *client.Contract, amount string) {
+	fmt.Printf("\n--> Submit Transaction: mint, creates new tokens for the central banker \n")
 
 	_, err := contract.Submit("Mint",
-		client.WithArguments(recipientID, amount))
+		client.WithArguments(amount))
 
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))

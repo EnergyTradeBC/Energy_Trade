@@ -129,7 +129,8 @@ func (s *SmartContract) Mint(ctx contractapi.TransactionContextInterface, recipi
 		return fmt.Errorf("failed to set event: %v", err)
 	}
 
-	log.Printf("Transfer from %s to %s: %d tokens", minter, recipient, amount)
+	log.Printf("minter account %s balance updated from %d to %d", minter, currentBalance, updatedBalance)
+
 	return nil
 }
 

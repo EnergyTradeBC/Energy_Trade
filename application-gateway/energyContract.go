@@ -7,7 +7,7 @@ import (
 )
 
 // Retrieves all the energy assets present on the ledger.
-func getAllEnergyAssets(contract *client.Contract) {
+func getAllEnergyAssets(contract *client.Contract) string {
 	fmt.Println("\n--> Evaluate Transaction: GetAllEnergyAssets, function returns all the current energy assets on the ledger")
 
 	evaluateResult, err := contract.EvaluateTransaction("GetAllAssets")
@@ -18,10 +18,12 @@ func getAllEnergyAssets(contract *client.Contract) {
 	result := formatJSON(evaluateResult)
 
 	fmt.Printf("*** Result:%s\n", result)
+
+	return result
 }
 
 // Retrieves the asset, if existing, with the assetID.
-func readEnergyAssetByID(contract *client.Contract) {
+func readEnergyAssetByID(contract *client.Contract) string {
 	fmt.Printf("\n--> Evaluate Transaction: ReadAsset, function returns asset attributes\n")
 
 	evaluateResult, err := contract.EvaluateTransaction("ReadAsset", assetID)
@@ -33,8 +35,7 @@ func readEnergyAssetByID(contract *client.Contract) {
 
 	fmt.Printf("*** Result:%s\n", result)
 
-	// return result  ==> ritorno una stringa o per esempio una struct specifica?
-	// 					  se invece il risultato è negativo, ovvero non esiste un asset con quell'ID, come si comporta?
+	return result // se invece il risultato è negativo, ovvero non esiste un asset con quell'ID, come si comporta?
 }
 
 // Submit a transaction synchronously, blocking until it has been committed to the ledger.
@@ -68,7 +69,7 @@ func transferEnergyAssetAsync(contract *client.Contract, newOwner_ID string, tra
 		panic(fmt.Errorf("failed to submit transaction asynchronously: %w", err))
 	}
 
-	fmt.Printf("\n*** Successfully submitted transaction to transfer ownership from %s to Mark. \n", string(submitResult))
+	fmt.Printf("\n*** Successfully submitted transaction to transfer ownership from %s to %s. \n", string(submitResult), newOwner_ID)
 	fmt.Println("*** Waiting for transaction commit.")
 
 	if commitStatus, err := commit.Status(); err != nil {

@@ -63,6 +63,16 @@ if [ "$MODE" == "join" ]; then
 	fi
 fi
 
+if [ "$MODE" == "anchor" ]; then
+	if [[ $# -lt 1 ]] ; then
+		createChannelHelp $MODE
+		exit 0
+	else
+		ORG=$1
+		shift
+	fi
+fi
+
 CONTAINER_CLI="docker"
 CONTAINER_CLI_COMPOSE="${CONTAINER_CLI}-compose"
 infoln "Using ${CONTAINER_CLI} and ${CONTAINER_CLI_COMPOSE}"

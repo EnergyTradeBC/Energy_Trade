@@ -1,0 +1,10 @@
+version: 0
+tlsconfig:
+  certpath: ""
+  keypath: ""
+  peercacertpath: /home/bchain/EnergyTrade/ENERGY-TRADE/organizations/peerOrganizations/org2.example.com/users/User1@org2.example.com/tls/ca.crt
+  timeout: 0s
+signerconfig:
+  mspid: Org2MSP
+  identitypath: /home/bchain/EnergyTrade/ENERGY-TRADE/organizations/peerOrganizations/org2.example.com/users/User1@org2.example.com/msp/signcerts/User1@org2.example.com-cert.pem
+  keypath: /home/bchain/EnergyTrade/ENERGY-TRADE/organizations/peerOrganizations/org2.example.com/users/User1@org2.example.com/msp/keystore/priv_sk

@@ -7,6 +7,12 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 )
 
+var createAuctionListener = false
+var closeAuctionListener = false
+var endAuctionListener = false
+
+var transferMoneyListener = false
+
 func startBlockEventListening(ctx context.Context, network *client.Network) {
 	fmt.Println("\n*** Start block event listening")
 
@@ -37,6 +43,10 @@ func startEnergyChaincodeEventListening(ctx context.Context, network *client.Net
 	if err != nil {
 		panic(fmt.Errorf("failed to start chaincode event listening: %w", err))
 	}
+
+	// close(events)
+	// CAN WE CLOSE EVENTS OR ONCE THEY ARE OPEN THEY CANNOT BE CLOSED?
+	// If we cannot close them we must manage the reception of events in a different way (global variables? 0 listen, 1 not listen)
 
 	go func() {
 		for event := range events {
@@ -94,6 +104,23 @@ func startAuctionChaincodeEventListening(ctx context.Context, network *client.Ne
 		for event := range events {
 			asset := formatJSON(event.Payload)
 			fmt.Printf("\n<-- Auction chaincode event received: %s - %s\n", event.EventName, asset)
+
+			if event.EventName == "createAuction" && createAuctionListener == true {
+
+				createAuctionListener = false
+				closeAuctionListener = true
+
+			} else if event.EventName == "closeAuction" && closeAuctionListener == true {
+
+				closeAuctionListener = false
+				endAuctionListener = true
+
+			} else if event.EventName == "endAuction" && endAuctionListener == true {
+
+				endAuctionListener = true
+
+			}
+
 		}
 	}()
 }

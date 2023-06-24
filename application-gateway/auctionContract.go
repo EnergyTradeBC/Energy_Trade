@@ -44,6 +44,8 @@ type Winners struct {
 	Quantity float32 `json:"quantity"`
 }
 
+var auctionStruct Auction
+
 func queryAuctionByID(contract *client.Contract, auction_ID string) string {
 	fmt.Println("\n--> Evaluate Transaction: queryAuctionByID, function returns all the information about the auction with <auctionID>")
 
@@ -132,7 +134,6 @@ func submitBid(contract *client.Contract, auction_ID string, bidID string) {
 		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
 	}
 
-	var auctionStruct Auction
 	err = json.Unmarshal(auctionInfo, &auctionStruct)
 	if err != nil {
 		panic(fmt.Errorf("Error during Unmarshal(): %w", err))
@@ -162,7 +163,6 @@ func closeAuction(contract *client.Contract) {
 		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
 	}
 
-	var auctionStruct Auction
 	err = json.Unmarshal(auctionInfo, &auctionStruct)
 	if err != nil {
 		panic(fmt.Errorf("Error during Unmarshal(): %w", err))
@@ -192,7 +192,6 @@ func revealBid(contract *client.Contract, auction_ID string, bidID string) {
 		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
 	}
 
-	var auctionStruct Auction
 	err = json.Unmarshal(auctionInfo, &auctionStruct)
 	if err != nil {
 		panic(fmt.Errorf("Error during Unmarshal(): %w", err))
@@ -243,7 +242,6 @@ func endAuction(contract *client.Contract) {
 		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
 	}
 
-	var auctionStruct Auction
 	err = json.Unmarshal(auctionInfo, &auctionStruct)
 	if err != nil {
 		panic(fmt.Errorf("Error during Unmarshal(): %w", err))

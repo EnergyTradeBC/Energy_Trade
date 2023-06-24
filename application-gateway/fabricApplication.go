@@ -12,7 +12,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -21,19 +20,6 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 )
 
-const assetID = "energy_1"
-const orgMSP = "Org1MSP"
-const auctionID = "auction_1"
-
-const moneyName = ""
-const moneySymbol = ""
-const moneyDecimals = ""
-
-var bidTransactionID = ""
-var contract_money *client.Contract
-var contract_energy *client.Contract
-var contract_auction *client.Contract
-
 type NetworkConfig struct {
 	ChannelName          string
 	ChaincodeMoneyName   string
@@ -41,19 +27,33 @@ type NetworkConfig struct {
 	ChaincodeAuctionName string
 }
 
-type MQTTConfig struct {
-	broker   string
-	port     int
-	topic    string
-	clientID string
-	username string
-	password string
+type moneySettingsStruct struct {
+	startingBid     string
+	minPrizeAuction string
+	maxPrizeAuction string
 }
 
-type MQTTmessage struct {
-	ProducedEnergy float64
-	ConsumedEnergy float64
+const orgMSP = "Org1MSP"
+
+const assetID = "energy_1"
+const auctionID = "auction_1"
+
+const moneyName = ""
+const moneySymbol = ""
+const moneyDecimals = ""
+
+var bidTransactionID = ""
+var moneySettings = &moneySettingsStruct{
+	startingBid:     "",
+	minPrizeAuction: "",
+	maxPrizeAuction: "",
 }
+
+var contract_money *client.Contract
+var contract_energy *client.Contract
+var contract_auction *client.Contract
+
+var c_excess = ""
 
 func main() {
 	// SETUP THE MQTT CONNECTION TO THE SMART METER
@@ -77,11 +77,14 @@ func main() {
 
 	// SETUP THE REST INTERFACE
 	router := gin.Default()
-	router.GET("/primo_get", getPRIMO)
-	router.GET("/secondo_get", getSECONDO)
+	router.GET("/moneySettings", getMoneySettings)
+	router.GET("/currentBalance", getCurrentBalance)
+	router.GET("/moneyTransactions", getMoneyTransactions)
+	router.GET("/currentEnergyAsset", getCurrentEnergyAsset)
+	router.GET("/energyTransactions", getEnergyTransactions)
+	router.GET("/remainingAssets")
 
-	router.POST("/primo_post", postPRIMO)
-	router.POST("/secondo_post", postSECONDO)
+	router.POST("/moneySettings", postMoneySettings)
 
 	router.Run("localhost:8080")
 
@@ -127,7 +130,7 @@ func main() {
 	startEnergyChaincodeEventListening(ctx, network, chaincodeEnergyName)
 	startAuctionChaincodeEventListening(ctx, network, chaincodeAuctionName)
 
-	for true {
+	for {
 
 	}
 
@@ -174,105 +177,4 @@ func formatJSON(data []byte) string {
 		panic(fmt.Errorf("failed to parse JSON: %w", err))
 	}
 	return prettyJSON.String()
-}
-
-// MQTT UTILS HANDLERS
-
-// Receives the message from the smart meter and perform some actions
-var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
-	fmt.Printf("Received message: %s from topic: %s\n", msg.Payload(), msg.Topic())
-
-	var message MQTTmessage
-	err := json.Unmarshal(msg.Payload(), &message)
-	if err != nil {
-		panic(fmt.Errorf("Error during Unmarshal(): %w", err))
-	}
-
-	readEnergyAssetByID(contract_energy)
-	// Prendo l'output: se assetID non esiste allora stop e vado avanti
-	//					se assetID esiste invece, registro la quantità rimanente e poi chiamo il delete
-	// if <asset-esiste> {
-	//		salvo la quantità da qualche parte ed eventualmente la invio a chi di dovere
-	deleteEnergyAsset(contract_energy)
-	// }
-
-	if message.ProducedEnergy > message.ConsumedEnergy {
-		production_excess := message.ProducedEnergy - message.ConsumedEnergy
-		s_excess := fmt.Sprintf("%v", production_excess)
-
-		createEnergyAsset(contract_energy, s_excess)
-
-		// Prima creo l'asset e poi indico l'asta
-	} else if message.ProducedEnergy < message.ConsumedEnergy {
-		consumption_excess := message.ConsumedEnergy - message.ProducedEnergy
-
-		// Devo far sapere in qualche modo al listener dell'asta quanta energia ho bisogno di comprare (variabile globale?)
-	}
-}
-
-var connectHandler mqtt.OnConnectHandler = func(client mqtt.Client) {
-	fmt.Println("Connected")
-}
-
-// (communicates an error to mobile application?)
-var connectLostHandler mqtt.ConnectionLostHandler = func(client mqtt.Client, err error) {
-	fmt.Printf("Connect lost: %v", err)
-}
-
-// REST FUNCTIONS (GET ad POST)
-
-type inputPOSTprimo struct {
-}
-
-type inputPOSTsecondo struct {
-}
-
-type outputGETprimo struct {
-}
-
-type outputGETsecondo struct {
-}
-
-// getPRIMO responds with
-func getPRIMO(c *gin.Context) {
-	var output outputGETprimo
-
-	c.IndentedJSON(http.StatusOK, output)
-}
-
-// getSECONDO responds with
-func getSECONDO(c *gin.Context) {
-	var output outputGETsecondo
-
-	c.IndentedJSON(http.StatusOK, output)
-}
-
-// postPRIMO ... from JSON received in the request body.
-func postPRIMO(c *gin.Context) {
-	var input inputPOSTprimo
-
-	// Call BindJSON to bind the received JSON to input
-	if err := c.BindJSON(&input); err != nil {
-		return
-	}
-
-	// Add the new album to the slice.
-	// albums = append(albums, newAlbum)
-
-	c.IndentedJSON(http.StatusCreated, input)
-}
-
-// postSECONDO ... from JSON received in the request body.
-func postSECONDO(c *gin.Context) {
-	var input inputPOSTsecondo
-
-	// Call BindJSON to bind the received JSON to input
-	if err := c.BindJSON(&input); err != nil {
-		return
-	}
-
-	// Add the new album to the slice.
-	// albums = append(albums, newAlbum)
-
-	c.IndentedJSON(http.StatusCreated, input)
 }

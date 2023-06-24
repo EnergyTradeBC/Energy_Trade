@@ -24,16 +24,13 @@ import (
 const (
 	mspID        = "Org1MSP"
 	cryptoPath   = "../ENERGY-TRADE/organizations/peerOrganizations/org1.example.com"
-	certPath     = cryptoPath + "/users/User1@org1.example.com/msp/signcerts/cert.pem"
+	certPath     = cryptoPath + "/users/User1@org1.example.com/msp/signcerts/User1@org1.example.com-cert.pem"
 	keyPath      = cryptoPath + "/users/User1@org1.example.com/msp/keystore/"
 	tlsCertPath  = cryptoPath + "/peers/peer0.org1.example.com/tls/ca.crt"
 	peerEndpoint = "localhost:7051"
 	gatewayPeer  = "peer0.org1.example.com"
 	assetID      = "energy_1"
 )
-
-var now = time.Now()
-var assetId = fmt.Sprintf("asset%d", now.Unix()*1e3+int64(now.Nanosecond())/1e6)
 
 func main() {
 	// The gRPC client connection should be shared by all Gateway connections to this endpoint
@@ -73,10 +70,11 @@ func main() {
 	network := gw.GetNetwork(channelName)
 	contract := network.GetContract(chaincodeName)
 
-	getAllAssets(contract)
-	createAsset(contract)
-	readAssetByID(contract)
-	transferAssetAsync(contract)
+	// createEnergyAsset(contract, "10")
+	// getAllEnergyAssets(contract)
+	readEnergyAssetByID(contract)
+	// transferEnergyAssetAsync(contract, "pippo", "5")
+	// getAllEnergyAssets(contract)
 }
 
 // newGrpcConnection creates a gRPC connection to the Gateway server.
@@ -147,10 +145,13 @@ func newSign() identity.Sign {
 }
 
 // Evaluate a transaction to query ledger state.
-func getAllAssets(contract *client.Contract) {
-	fmt.Println("\n--> Evaluate Transaction: GetAllAssets, function returns all the current assets on the ledger")
+
+// GENERA ERRORE QUANDO SI FA UNA QUERY E IL LEDGER STATE E' VUOTO (ERRORE DI FORMATTAZIONE JSON)
+func getAllEnergyAssets(contract *client.Contract) {
+	fmt.Println("\n--> Evaluate Transaction: GetAllEnergyAssets, function returns all the current energy assets on the ledger")
 
 	evaluateResult, err := contract.EvaluateTransaction("GetAllAssets")
+
 	if err != nil {
 		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
 	}
@@ -160,23 +161,31 @@ func getAllAssets(contract *client.Contract) {
 }
 
 // Evaluate a transaction by assetID to query ledger state.
-func readAssetByID(contract *client.Contract) {
+func readEnergyAssetByID(contract *client.Contract) {
 	fmt.Printf("\n--> Evaluate Transaction: ReadAsset, function returns asset attributes\n")
 
-	evaluateResult, err := contract.EvaluateTransaction("ReadAsset", assetId)
+	evaluateResult, err := contract.EvaluateTransaction("ReadAsset", assetID)
+
 	if err != nil {
 		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
 	}
 	result := formatJSON(evaluateResult)
 
 	fmt.Printf("*** Result:%s\n", result)
+
+	// return result  ==> ritorno una stringa o per esempio una struct specifica?
+	// 					  se invece il risultato è negativo, ovvero non esiste un asset con quell'ID, come si comporta?
 }
 
 // Submit a transaction synchronously, blocking until it has been committed to the ledger.
-func createAsset(contract *client.Contract) {
-	fmt.Printf("\n--> Submit Transaction: CreateAsset, creates new asset with ID, Color, Size, Owner and AppraisedValue arguments \n")
+func createEnergyAsset(contract *client.Contract, quantity string) {
+	fmt.Printf("\n--> Submit Transaction: CreateEnergyAsset, creates new energy asset with asset_ID and quantity arguments \n")
 
-	_, err := contract.SubmitTransaction("CreateAsset", assetId, "yellow", "5", "Tom", "1300")
+	// _, err := contract.SubmitTransaction("CreateAsset", asset_ID, quantity)
+	// Specifico che l'endorsement deve essere fornito solo dall'organizzazione stessa che sta creando l'asset (nessun altro deve confermare)
+	_, err := contract.Submit("CreateAsset",
+		client.WithArguments(assetID, quantity))
+
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
 	}
@@ -186,15 +195,17 @@ func createAsset(contract *client.Contract) {
 
 // Submit transaction asynchronously, blocking until the transaction has been sent to the orderer, and allowing
 // this thread to process the chaincode response (e.g. update a UI) without waiting for the commit notification
-func transferAssetAsync(contract *client.Contract) {
-	fmt.Printf("\n--> Async Submit Transaction: TransferAsset, updates existing asset owner")
+func transferEnergyAssetAsync(contract *client.Contract, newOwner_ID string, transfer_quantity string) {
+	fmt.Printf("\n--> Async Submit Transaction: TransferAsset, transfer part or the entire energy asset to a new owner")
 
-	submitResult, commit, err := contract.SubmitAsync("TransferAsset", client.WithArguments(assetId, "Mark"))
+	submitResult, commit, err := contract.SubmitAsync("TransferAsset",
+		client.WithArguments(assetID, newOwner_ID, transfer_quantity))
+
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction asynchronously: %w", err))
 	}
 
-	fmt.Printf("\n*** Successfully submitted transaction to transfer ownership from %s to Mark. \n", string(submitResult))
+	fmt.Printf("\n*** Successfully submitted transaction to transfer ownership from %s to %s. \n", string(submitResult), newOwner_ID)
 	fmt.Println("*** Waiting for transaction commit.")
 
 	if commitStatus, err := commit.Status(); err != nil {

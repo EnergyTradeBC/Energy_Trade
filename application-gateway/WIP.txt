@@ -57,7 +57,7 @@ FATTO:
         - closeAuction => set a timer for calling "endAuction" (leave enough time to reveal the bids)
         - revealBid
         - endAuction => - if we decided to send the asset first, transfer the quantity of asset established in the auction to the winner (using "queryAuctionByID")
-                        - else starts the "MONEY CONTRACT LISTENER" for "transferMoney"
+                        - <<<NOPE>>> else starts the "MONEY CONTRACT LISTENER" for "transferMoney"
 
 DA FARE:
 
@@ -70,6 +70,8 @@ DA FARE:
 
     LISTENER FOR BC EVENTS:
 
+         <<<NOPE>>>
+        
         MONEY CONTRACT LISTENER:
             - listener for "transferMoney" event => if the quantity of money received match the quantity decided in the auction it 
                                                     triggers "transferEnergyAssetAsync" which transfer the asset sold in the auction
@@ -78,6 +80,8 @@ DA FARE:
             - stops the "MONEY CONTRACT LISTENER" for "transferMoney"
 
         < o viene fatto il listener sui soldi o sull'asset, fanno la stessa cosa ma uno suppone che venga prima mandato l'asset mnetre l'altro il denaro > 
+        
+        <<<NOPE>>>
 
         ASSET CONTRACT LISTENER:
             - listener for "transferEnergyAssetAsync" event => if the quantity of the asset received match the quantity decided in the auction it 

@@ -1,0 +1,31 @@
+cd /home/bchain/EnergyTrade/ENERGY-TRADE
+./SETUP_WHOLE_NETWORK.sh
+
+./scripts/deployCC.sh packageChaincode -ccn auction -ccp ../auction/ -ccep "OR('Org1MSP.peer','Org2MSP.peer')"
+./scripts/deployCC.sh installChaincode 1 -ccn auction
+./scripts/deployCC.sh installChaincode 2 -ccn auction
+./scripts/deployCC.sh installChaincode 3 -ccn auction
+./scripts/deployCC.sh installChaincode 4 -ccn auction
+./scripts/deployCC.sh installChaincode 5 -ccn auction
+
+./scripts/deployCC.sh approveForMyOrg 1 -ccn auction -c channeltest
+./scripts/deployCC.sh approveForMyOrg 2 -ccn auction -c channeltest
+./scripts/deployCC.sh approveForMyOrg 3 -ccn auction -c channeltest
+./scripts/deployCC.sh approveForMyOrg 4 -ccn auction -c channeltest
+./scripts/deployCC.sh approveForMyOrg 5 -ccn auction -c channeltest
+
+./scripts/deployCC.sh commitChaincodeDefinition 1 2 3 4 5 -ccn auction -c channeltest -ccs 1
+
+peer chaincode invoke "${TARGET_TLS_OPTIONS[@]}" -C channeltest -n auction -c '{"function":"CreateAuction","Args":["1", "energy", "5", "10"]}'
+
+
+cd ../auction/application-javascript
+npm install
+node enrollAdmin.js org1
+
+cd ../../ENERGY-TRADE
+./network.sh down
+docker volume prune
+
+
+

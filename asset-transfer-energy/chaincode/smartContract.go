@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/hyperledger/fabric-chaincode-go/shim"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
@@ -23,6 +22,13 @@ type Asset struct {
 	Quantity float32 `json:"Quantity"`
 }
 
+// event provides an organized struct for emitting events
+type event struct {
+	Old_owner   string  `json:"old_ownerID"`
+	New_OwnerID string  `json:"new_ownerID"`
+	Quantity    float32 `json:"quantity"`
+}
+
 // submittingClientIdentity is an internal function that retrieves the ID of the submitting client identity
 func submittingClientIdentity(ctx contractapi.TransactionContextInterface) (string, error) {
 	b64ID, err := ctx.GetClientIdentity().GetID()
@@ -36,23 +42,23 @@ func submittingClientIdentity(ctx contractapi.TransactionContextInterface) (stri
 	return string(decodeID), nil
 }
 
-// verifyClientOrgMatchesPeerOrg is an internal function used to verify client org id matches peer org id.
-func verifyClientOrgMatchesPeerOrg(ctx contractapi.TransactionContextInterface) error {
-	clientMSPID, err := ctx.GetClientIdentity().GetMSPID()
-	if err != nil {
-		return fmt.Errorf("failed getting the client's MSPID: %v", err)
-	}
-	peerMSPID, err := shim.GetMSPID()
-	if err != nil {
-		return fmt.Errorf("failed getting the peer's MSPID: %v", err)
-	}
+// // verifyClientOrgMatchesPeerOrg is an internal function used to verify client org id matches peer org id.
+// func verifyClientOrgMatchesPeerOrg(ctx contractapi.TransactionContextInterface) error {
+// 	clientMSPID, err := ctx.GetClientIdentity().GetMSPID()
+// 	if err != nil {
+// 		return fmt.Errorf("failed getting the client's MSPID: %v", err)
+// 	}
+// 	peerMSPID, err := shim.GetMSPID()
+// 	if err != nil {
+// 		return fmt.Errorf("failed getting the peer's MSPID: %v", err)
+// 	}
 
-	if clientMSPID != peerMSPID {
-		return fmt.Errorf("client from org %v is not authorized to write private data from an org %v peer", clientMSPID, peerMSPID)
-	}
+// 	if clientMSPID != peerMSPID {
+// 		return fmt.Errorf("client from org %v is not authorized to write private data from an org %v peer", clientMSPID, peerMSPID)
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 // verifyClientIDMatchesOwnerID is an internal function used to verify client id matches owner of the asset id.
 func verifyClientIDMatchesOwnerID(ctx contractapi.TransactionContextInterface, asset_ID string) error {
@@ -92,10 +98,18 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 	// Verify that the client is submitting request to peer in their organization
 	// This is to ensure that a client from another org doesn't attempt to read or
 	// write private data from this peer.
-	err := verifyClientOrgMatchesPeerOrg(ctx)
+	// err := verifyClientOrgMatchesPeerOrg(ctx)
+	// if err != nil {
+	// 	return fmt.Errorf("CreateAsset cannot be performed: Error %v", err)
+	// }
+
+	// Get ID of submitting client identity
+	clientID, err := submittingClientIdentity(ctx)
 	if err != nil {
-		return fmt.Errorf("CreateAsset cannot be performed: Error %v", err)
+		return err
 	}
+
+	asset_ID = asset_ID + "_" + clientID
 
 	exists, err := s.AssetExists(ctx, asset_ID)
 	if err != nil {
@@ -105,11 +119,7 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 		return fmt.Errorf("the asset %s already exists", asset_ID)
 	}
 
-	// Get ID of submitting client identity
-	clientID, err := submittingClientIdentity(ctx)
-	if err != nil {
-		return err
-	}
+	// clientID := "pippo"
 
 	asset := Asset{
 		Asset_ID: asset_ID,
@@ -126,19 +136,42 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 		return fmt.Errorf("failed to put to world state. %v", err)
 	}
 
+	// Emit the createAuction event
+	transferAssetEvent := &event{
+		Old_owner:   clientID,
+		New_OwnerID: "Questa è solo una prova",
+		Quantity:    0,
+	}
+	transferAssetEventSON, err := json.Marshal(transferAssetEvent)
+	if err != nil {
+		return fmt.Errorf("failed to obtain JSON encoding: %v", err)
+	}
+	err = ctx.GetStub().SetEvent("TransferAsset", transferAssetEventSON)
+	if err != nil {
+		return fmt.Errorf("failed to set event: %v", err)
+	}
+
 	return err
 }
 
-// ReadAsset returns the asset stored in the world state with given id.
+// ReadAsset returns the asset of the client stored in the world state with given id.
 func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, asset_ID string) (*Asset, error) {
 
 	// Verify that the client is submitting request to peer in their organization
 	// This is to ensure that a client from another org doesn't attempt to read or
 	// write private data from this peer.
-	err := verifyClientOrgMatchesPeerOrg(ctx)
+	// err := verifyClientOrgMatchesPeerOrg(ctx)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("ReadAsset cannot be performed: Error %v", err)
+	// }
+
+	// Get ID of submitting client identity
+	clientID, err := submittingClientIdentity(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("ReadAsset cannot be performed: Error %v", err)
+		return nil, err
 	}
+
+	asset_ID = asset_ID + "_" + clientID
 
 	assetJSON, err := ctx.GetStub().GetState(asset_ID)
 	if err != nil {
@@ -163,10 +196,18 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	// Verify that the client is submitting request to peer in their organization
 	// This is to ensure that a client from another org doesn't attempt to read or
 	// write private data from this peer.
-	err := verifyClientOrgMatchesPeerOrg(ctx)
+	// err := verifyClientOrgMatchesPeerOrg(ctx)
+	// if err != nil {
+	// 	return fmt.Errorf("UpdateAsset cannot be performed: Error %v", err)
+	// }
+
+	// Get ID of submitting client identity
+	clientID, err := submittingClientIdentity(ctx)
 	if err != nil {
-		return fmt.Errorf("UpdateAsset cannot be performed: Error %v", err)
+		return err
 	}
+
+	asset_ID = asset_ID + "_" + clientID
 
 	exists, err := s.AssetExists(ctx, asset_ID)
 	if err != nil {
@@ -181,12 +222,6 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	err = verifyClientIDMatchesOwnerID(ctx, asset_ID)
 	if err != nil {
 		return fmt.Errorf("UpdateAsset cannot be performed: Error %v", err)
-	}
-
-	// Get ID of submitting client identity
-	clientID, err := submittingClientIdentity(ctx)
-	if err != nil {
-		return err
 	}
 
 	// overwriting original asset with new asset
@@ -209,10 +244,18 @@ func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface,
 	// Verify that the client is submitting request to peer in their organization
 	// This is to ensure that a client from another org doesn't attempt to read or
 	// write private data from this peer.
-	err := verifyClientOrgMatchesPeerOrg(ctx)
+	// err := verifyClientOrgMatchesPeerOrg(ctx)
+	// if err != nil {
+	// 	return fmt.Errorf("DeleteAsset cannot be performed: Error %v", err)
+	// }
+
+	// Get ID of submitting client identity
+	clientID, err := submittingClientIdentity(ctx)
 	if err != nil {
-		return fmt.Errorf("DeleteAsset cannot be performed: Error %v", err)
+		return err
 	}
+
+	asset_ID = asset_ID + "_" + clientID
 
 	exists, err := s.AssetExists(ctx, asset_ID)
 	if err != nil {
@@ -233,17 +276,96 @@ func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface,
 }
 
 // TransferAsset updates the owner field of asset with given id in world state, and returns the old owner.
+func (s *SmartContract) TransferAsset_TEST(ctx contractapi.TransactionContextInterface, id string, newOwner string) (string, error) {
+
+	// Get ID of submitting client identity
+	clientID, err := submittingClientIdentity(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	id = id + "_" + clientID
+
+	// asset, err := s.ReadAsset(ctx, id)
+	// if err != nil {
+	// 	return "", err
+	// }
+
+	// overwriting original asset with new asset
+	// asset := Asset{
+	// 	Asset_ID: "energy_" + newOwner,
+	// 	Owner_ID: newOwner,
+	// 	Quantity: 10,
+	// }
+
+	assetJSON, err := ctx.GetStub().GetState(id)
+	if err != nil {
+		return "", fmt.Errorf("failed to read from world state: %v", err)
+	}
+	if assetJSON == nil {
+		return "", fmt.Errorf("the asset %s does not exist", id)
+	}
+
+	var asset Asset
+	err = json.Unmarshal(assetJSON, &asset)
+	if err != nil {
+		return "", err
+	}
+
+	oldOwner := asset.Owner_ID
+	asset.Owner_ID = newOwner
+
+	assetJSON, err = json.Marshal(asset)
+	if err != nil {
+		return "", err
+	}
+
+	err = ctx.GetStub().PutState("energy_"+newOwner, assetJSON)
+	if err != nil {
+		return "", err
+	}
+
+	err = ctx.GetStub().DelState(id)
+	if err != nil {
+		return "", err
+	}
+
+	return oldOwner, nil
+}
+
+// TransferAsset updates the owner field of asset with given id in world state, and returns the old owner.
 func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterface, asset_ID string, newOwner_ID string, transfer_quantity float32) (string, error) {
 
 	// Verify that the client is submitting request to peer in their organization
 	// This is to ensure that a client from another org doesn't attempt to read or
 	// write private data from this peer.
-	err := verifyClientOrgMatchesPeerOrg(ctx)
+	// err := verifyClientOrgMatchesPeerOrg(ctx)
+	// if err != nil {
+	// 	return "", fmt.Errorf("TransferAsset cannot be performed: Error %v", err)
+	// }
+
+	// Get ID of submitting client identity
+	clientID, err := submittingClientIdentity(ctx)
 	if err != nil {
-		return "", fmt.Errorf("TransferAsset cannot be performed: Error %v", err)
+		return "", err
 	}
 
-	asset, err := s.ReadAsset(ctx, asset_ID)
+	asset_ID = asset_ID + "_" + clientID
+
+	// asset, err := s.ReadAsset(ctx, asset_ID)
+	// if err != nil {
+	// 	return "", err
+	// }
+	assetJSON, err := ctx.GetStub().GetState(asset_ID)
+	if err != nil {
+		return "", fmt.Errorf("failed to read from world state: %v", err)
+	}
+	if assetJSON == nil {
+		return "", fmt.Errorf("the asset %s does not exist", asset_ID)
+	}
+
+	var asset Asset
+	err = json.Unmarshal(assetJSON, &asset)
 	if err != nil {
 		return "", err
 	}
@@ -259,9 +381,65 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 
 	if asset_quantity == transfer_quantity {
 
-		// oldOwner := asset.Owner_ID
-		asset.Owner_ID = newOwner_ID
+		// Per il momento il nome dell'asset è hardcoded come <energy_>+clientID
+		new_asset_ID := "energy_" + newOwner_ID
 
+		// oldOwner := asset.Owner_ID
+		new_asset := Asset{
+			Asset_ID: new_asset_ID,
+			Owner_ID: newOwner_ID,
+			Quantity: transfer_quantity,
+		}
+
+		assetJSON, err := json.Marshal(new_asset)
+		if err != nil {
+			return "", err
+		}
+
+		// Put the new asset in the state with the new ownership
+		err = ctx.GetStub().PutState(new_asset_ID, assetJSON)
+		if err != nil {
+			return "", err
+		}
+
+		// Deletes the old asset with outdated ownership
+		err = ctx.GetStub().DelState(asset_ID)
+		if err != nil {
+			return "", err
+		}
+
+		// Emit the TransferAsset event
+		transferAssetEvent := &event{
+			Old_owner:   clientID,
+			New_OwnerID: newOwner_ID,
+			Quantity:    transfer_quantity,
+		}
+		transferAssetEventSON, err := json.Marshal(transferAssetEvent)
+		if err != nil {
+			return "", fmt.Errorf("failed to obtain JSON encoding: %v", err)
+		}
+		err = ctx.GetStub().SetEvent("TransferAsset", transferAssetEventSON)
+		if err != nil {
+			return "", fmt.Errorf("failed to set event: %v", err)
+		}
+
+		return "Transferred entire asset", nil
+
+	} else if asset_quantity > transfer_quantity {
+
+		remaining_quantity := asset_quantity - transfer_quantity
+
+		// err := s.UpdateAsset(ctx, asset_ID, remaining_quantity)
+		// if err != nil {
+		// 	return "", fmt.Errorf("old asset cannot be updated: Error %v", err)
+		// }
+
+		// overwriting original asset with new asset
+		asset := Asset{
+			Asset_ID: asset_ID,
+			Owner_ID: clientID,
+			Quantity: remaining_quantity,
+		}
 		assetJSON, err := json.Marshal(asset)
 		if err != nil {
 			return "", err
@@ -272,32 +450,27 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 			return "", err
 		}
 
-		return "Transferred entire asset", nil
+		// Per il momento il nome dell'asset è hardcoded come <energy_>+clientID
+		new_asset_ID := "energy_" + newOwner_ID
 
-	} else if asset_quantity > transfer_quantity {
-
-		remaining_quantity := asset_quantity - transfer_quantity
-
-		err := s.UpdateAsset(ctx, asset_ID, remaining_quantity)
-		if err != nil {
-			return "", fmt.Errorf("old asset cannot be updated: Error %v", err)
-		}
-
-		// L'ASSET ID DEVE ESSERE CAMBIATO, MA QUALE USIAMO PER L'ASSET CHE VIENE CREATO IN MODO DA INVIARLO AL COMPRATORE?
 		// Create a new asset using the newOwner_ID (create an asset
 		// for the buyer instead of transfering it)
-		asset := Asset{
-			Asset_ID: asset_ID,
+		asset = Asset{
+			Asset_ID: new_asset_ID,
 			Owner_ID: newOwner_ID,
 			Quantity: transfer_quantity,
 		}
-		assetJSON, err := json.Marshal(asset)
+		assetJSON, err = json.Marshal(asset)
 		if err != nil {
 			return "", err
 		}
 
-		// L'ASSET ID DEVE ESSERE CAMBIATO, MA QUALE USIAMO PER L'ASSET CHE VIENE CREATO IN MODO DA INVIARLO AL COMPRATORE?
-		return "Transferred part of the asset", ctx.GetStub().PutState(asset_ID, assetJSON)
+		err = ctx.GetStub().PutState(new_asset_ID, assetJSON)
+		if err != nil {
+			return "", err
+		}
+
+		return "Transferred part of the asset", nil
 
 	}
 

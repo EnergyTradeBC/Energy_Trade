@@ -45,14 +45,14 @@ set -x
 
 ./scripts/deployCC.sh checkCommitReadiness 1 -ccn chaincodetest -c channeltest
 
-./scripts/deployCC.sh approveForMyOrg 1 -ccn chaincodetest -c channeltest -ccep "OR('Org1MSP.peer','Org2MSP.peer')"
-./scripts/deployCC.sh approveForMyOrg 2 -ccn chaincodetest -c channeltest -ccep "OR('Org1MSP.peer','Org2MSP.peer')"
+./scripts/deployCC.sh approveForMyOrg 1 -ccn chaincodetest -c channeltest #-ccep "OR('Org1MSP.peer','Org2MSP.peer')"
+./scripts/deployCC.sh approveForMyOrg 2 -ccn chaincodetest -c channeltest #-ccep "OR('Org1MSP.peer','Org2MSP.peer')"
 # ./scripts/deployCC.sh approveForMyOrg 3 -ccn chaincodetest -c channeltest
 # ./scripts/deployCC.sh approveForMyOrg 4 -ccn chaincodetest -c channeltest
 # ./scripts/deployCC.sh approveForMyOrg 5 -ccn chaincodetest -c channeltest
 
 ./scripts/deployCC.sh checkCommitReadiness 1 -ccn chaincodetest -c channeltest
 
-./scripts/deployCC.sh commitChaincodeDefinition 1 2 -ccn chaincodetest -c channeltest -ccep "OR('Org1MSP.peer','Org2MSP.peer')"
+./scripts/deployCC.sh commitChaincodeDefinition 1 2 -ccn chaincodetest -c channeltest #-ccep "OR('Org1MSP.peer','Org2MSP.peer')"
 
 set +x

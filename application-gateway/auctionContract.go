@@ -9,6 +9,7 @@ import (
 
 // Auction data
 type Auction struct {
+	AuctionID    string             `json:"auctionID"`
 	Type         string             `json:"objectType"`
 	ItemSold     string             `json:"item"`
 	Seller       string             `json:"seller"`
@@ -20,6 +21,19 @@ type Auction struct {
 	Price        float32            `json:"price"`
 	Status       string             `json:"status"`
 	Auditor      bool               `json:"auditor"`
+	StartingBid  float32            `json:"startingBid"`
+}
+
+// event provides an organized struct for emitting events
+type AuctionEvent struct {
+	AuctionID   string    `json:"auctionID"`
+	ItemSold    string    `json:"item"`
+	StartingBid float32   `json:"startingBid"`
+	Seller      string    `json:"seller"`
+	Quantity    float32   `json:"quantity"`
+	Winners     []Winners `json:"winners"`
+	Price       float32   `json:"price"`
+	Status      string    `json:"status"`
 }
 
 // FullBid is the structure of a revealed bid
@@ -82,7 +96,7 @@ func createAuction(contract *client.Contract, item string, startingBid string, q
 
 	//_, err := contract.SubmitTransaction("CreateAuction", auctionID, item, price, quantity)
 	_, err := contract.Submit("CreateAuction",
-		client.WithArguments(auctionID, item, startingBid, quantity))
+		client.WithArguments(auctionID, item, quantity, startingBid))
 
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
@@ -111,7 +125,7 @@ func makeBid(contract *client.Contract, auction_ID string, quantity string, pric
 
 	fmt.Printf("\n--> Submit Transaction: makeBid, creates a new bid \n")
 
-	bidID, err := contract.Submit("CreateAuction",
+	bidID, err := contract.Submit("Bid",
 		client.WithArguments(auction_ID),
 		client.WithTransient(privateBid),
 		client.WithEndorsingOrganizations(orgMSP))
@@ -136,7 +150,7 @@ func submitBid(contract *client.Contract, auction_ID string, bidID string) {
 
 	err = json.Unmarshal(auctionInfo, &auctionStruct)
 	if err != nil {
-		panic(fmt.Errorf("Error during Unmarshal(): %w", err))
+		panic(fmt.Errorf("error during Unmarshal(): %w", err))
 	}
 
 	fmt.Printf("\n--> Submit Transaction: submitBid, submits the bid created previously with bidID \n")
@@ -165,7 +179,7 @@ func closeAuction(contract *client.Contract) {
 
 	err = json.Unmarshal(auctionInfo, &auctionStruct)
 	if err != nil {
-		panic(fmt.Errorf("Error during Unmarshal(): %w", err))
+		panic(fmt.Errorf("error during Unmarshal(): %w", err))
 	}
 
 	fmt.Printf("\n--> Submit Transaction: closeAuction, closes the auction blocking bids \n")
@@ -194,7 +208,7 @@ func revealBid(contract *client.Contract, auction_ID string, bidID string) {
 
 	err = json.Unmarshal(auctionInfo, &auctionStruct)
 	if err != nil {
-		panic(fmt.Errorf("Error during Unmarshal(): %w", err))
+		panic(fmt.Errorf("error during Unmarshal(): %w", err))
 	}
 
 	fmt.Printf("\n--> Evaluate Transaction: get bid information\n")
@@ -207,7 +221,7 @@ func revealBid(contract *client.Contract, auction_ID string, bidID string) {
 	var bidStruct FullBid
 	err = json.Unmarshal(bidInfo, &bidStruct)
 	if err != nil {
-		panic(fmt.Errorf("Error during Unmarshal(): %w", err))
+		panic(fmt.Errorf("error during Unmarshal(): %w", err))
 	}
 
 	// Build the transient map with the bid information
@@ -244,7 +258,7 @@ func endAuction(contract *client.Contract) {
 
 	err = json.Unmarshal(auctionInfo, &auctionStruct)
 	if err != nil {
-		panic(fmt.Errorf("Error during Unmarshal(): %w", err))
+		panic(fmt.Errorf("error during Unmarshal(): %w", err))
 	}
 
 	fmt.Printf("\n--> Submit Transaction: endAuction, ends the auction and elect the winners \n")

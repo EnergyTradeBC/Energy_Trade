@@ -23,22 +23,45 @@ type MQTTmessage struct {
 	ConsumedEnergy float64
 }
 
+type RemainingAsset struct {
+	Timestamp string
+	Quantity  string
+}
+
+// Variable used to register the status of the client inside the auction (buyer or seller)
+var clientAuctionStatus = "buyer"
+
 var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
 	fmt.Printf("Received message: %s from topic: %s\n", msg.Payload(), msg.Topic())
 
 	var message MQTTmessage
 	err := json.Unmarshal(msg.Payload(), &message)
 	if err != nil {
-		panic(fmt.Errorf("Error during Unmarshal(): %w", err))
+		panic(fmt.Errorf("error during Unmarshal(): %w", err))
 	}
 
-	readEnergyAssetByID(contract_energy)
-	// Prendo l'output: se assetID non esiste allora stop e vado avanti
-	//					se assetID esiste invece, registro la quantità rimanente e poi chiamo il delete
-	// if <asset-esiste> {
-	//		salvo la quantità da qualche parte ed eventualmente la invio a chi di dovere
-	deleteEnergyAsset(contract_energy)
-	// }
+	remainingQuantity := readEnergyAssetByID(contract_energy)
+
+	// If there is some remaining quantity I save the remaining quantity and then delete the asset
+	if remainingQuantity != "failed" {
+
+		// If the client in the previous time slot was a seller we can add the remaining assets to the array
+		// If the client was a buyer, the quantity that remains cannot be sold to the accumulator or donated so it must deleted only
+		if clientAuctionStatus == "seller" {
+
+			remainingAsset := &RemainingAsset{
+				Timestamp: time.Now().String(),
+				Quantity:  remainingQuantity,
+			}
+
+			// COME GESTIIAMO IL NODO DELLE DONAZIONI? E' UN PEER FISSO DI CUI OGNI CLIENT CONOSCE GLI ENDPOINT E
+			// RICEVE UNA PERCENTUALE DEGLI ASSET CHE AVANZANO? (CHE PERCENTUALE?)
+
+			remainingAssetsArray.AssetArray = append(remainingAssetsArray.AssetArray, remainingAsset)
+		}
+
+		deleteEnergyAsset(contract_energy)
+	}
 
 	if message.ProducedEnergy > message.ConsumedEnergy {
 		production_excess := message.ProducedEnergy - message.ConsumedEnergy
@@ -48,6 +71,9 @@ var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Me
 		// I leave the time to the buyers to "activate" the listener
 		time.Sleep(5 * time.Second)
 
+		// Set the client status to seller
+		clientAuctionStatus = "seller"
+
 		// Call the seller manager
 		manageSeller(p_excess)
 
@@ -55,8 +81,13 @@ var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Me
 		consumption_excess := message.ConsumedEnergy - message.ProducedEnergy
 		c_excess = fmt.Sprintf("%v", consumption_excess)
 
-		// Devo far sapere in qualche modo al listener dell'asta quanta energia ho bisogno di comprare (variabile globale?)
+		fmt.Printf("Consumption excess: %s \n", c_excess)
 
+		// Set the client status to buyer
+		clientAuctionStatus = "buyer"
+
+		// With the global variable I make the listener aware of the fact that it must catch createAuction events
+		// The buyer operations are managed inside the listeners
 		createAuctionListener = true
 	}
 }
@@ -76,8 +107,8 @@ func sub_topic(client mqtt.Client, topic string) {
 	fmt.Printf("Subscribed to topic %s", topic)
 }
 
-func publish(client mqtt.Client, topic string, message string) {
-	token := client.Publish(topic, 0, false, message)
-	token.Wait()
-	time.Sleep(time.Second)
-}
+// func publish(client mqtt.Client, topic string, message string) {
+// 	token := client.Publish(topic, 0, false, message)
+// 	token.Wait()
+// 	time.Sleep(time.Second)
+// }

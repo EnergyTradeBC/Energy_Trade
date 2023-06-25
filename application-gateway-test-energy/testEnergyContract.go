@@ -8,9 +8,11 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"time"
@@ -29,10 +31,16 @@ const (
 	tlsCertPath  = cryptoPath + "/peers/peer0.org1.example.com/tls/ca.crt"
 	peerEndpoint = "localhost:7051"
 	gatewayPeer  = "peer0.org1.example.com"
-	assetID      = "energy_1"
+	assetID      = "energy"
 )
 
 func main() {
+
+	err := os.Setenv("DISCOVERY_AS_LOCALHOST", "true")
+	if err != nil {
+		log.Fatalf("Error setting DISCOVERY_AS_LOCALHOST environment variable: %v", err)
+	}
+
 	// The gRPC client connection should be shared by all Gateway connections to this endpoint
 	clientConnection := newGrpcConnection()
 	defer clientConnection.Close()
@@ -70,11 +78,35 @@ func main() {
 	network := gw.GetNetwork(channelName)
 	contract := network.GetContract(chaincodeName)
 
-	// createEnergyAsset(contract, "10")
-	// getAllEnergyAssets(contract)
+	// Context used for event listening
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Listen for events emitted by subsequent transactions
+	startChaincodeEventListening(ctx, network)
+
+	// deleteEnergyAsset(contract)
+	createEnergyAsset(contract, "energy", "10")
+	getAllEnergyAssets(contract)
 	readEnergyAssetByID(contract)
-	// transferEnergyAssetAsync(contract, "pippo", "5")
-	// getAllEnergyAssets(contract)
+	transferEnergyAssetAsync(contract, "porcoddio", "5")
+	getAllEnergyAssets(contract)
+}
+
+func startChaincodeEventListening(ctx context.Context, network *client.Network) {
+	fmt.Println("\n*** Start chaincode event listening")
+
+	events, err := network.ChaincodeEvents(ctx, "chaincodetest")
+	if err != nil {
+		panic(fmt.Errorf("failed to start chaincode event listening: %w", err))
+	}
+
+	go func() {
+		for event := range events {
+			asset := formatJSON(event.Payload)
+			fmt.Printf("\n<-- Chaincode event received: %s - %s\n", event.EventName, asset)
+		}
+	}()
 }
 
 // newGrpcConnection creates a gRPC connection to the Gateway server.
@@ -178,13 +210,13 @@ func readEnergyAssetByID(contract *client.Contract) {
 }
 
 // Submit a transaction synchronously, blocking until it has been committed to the ledger.
-func createEnergyAsset(contract *client.Contract, quantity string) {
+func createEnergyAsset(contract *client.Contract, tempAssetID string, quantity string) {
 	fmt.Printf("\n--> Submit Transaction: CreateEnergyAsset, creates new energy asset with asset_ID and quantity arguments \n")
 
 	// _, err := contract.SubmitTransaction("CreateAsset", asset_ID, quantity)
 	// Specifico che l'endorsement deve essere fornito solo dall'organizzazione stessa che sta creando l'asset (nessun altro deve confermare)
 	_, err := contract.Submit("CreateAsset",
-		client.WithArguments(assetID, quantity))
+		client.WithArguments(tempAssetID, quantity))
 
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
@@ -196,23 +228,26 @@ func createEnergyAsset(contract *client.Contract, quantity string) {
 // Submit transaction asynchronously, blocking until the transaction has been sent to the orderer, and allowing
 // this thread to process the chaincode response (e.g. update a UI) without waiting for the commit notification
 func transferEnergyAssetAsync(contract *client.Contract, newOwner_ID string, transfer_quantity string) {
-	fmt.Printf("\n--> Async Submit Transaction: TransferAsset, transfer part or the entire energy asset to a new owner")
+	fmt.Printf("\n--> Async Submit Transaction: TransferAsset, transfer part or the entire energy asset to a new owner\n")
 
-	submitResult, commit, err := contract.SubmitAsync("TransferAsset",
+	_, err := contract.Submit("TransferAsset",
 		client.WithArguments(assetID, newOwner_ID, transfer_quantity))
+
+	// submitResult, commit, err := contract.SubmitAsync("TransferAsset",
+	// 	client.WithArguments(assetID, newOwner_ID))
 
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction asynchronously: %w", err))
 	}
 
-	fmt.Printf("\n*** Successfully submitted transaction to transfer ownership from %s to %s. \n", string(submitResult), newOwner_ID)
-	fmt.Println("*** Waiting for transaction commit.")
+	// fmt.Printf("\n*** Successfully submitted transaction to transfer ownership from %s to %s. \n", string(submitResult), newOwner_ID)
+	// fmt.Println("*** Waiting for transaction commit.")
 
-	if commitStatus, err := commit.Status(); err != nil {
-		panic(fmt.Errorf("failed to get commit status: %w", err))
-	} else if !commitStatus.Successful {
-		panic(fmt.Errorf("transaction %s failed to commit with status: %d", commitStatus.TransactionID, int32(commitStatus.Code)))
-	}
+	// if commitStatus, err := commit.Status(); err != nil {
+	// 	panic(fmt.Errorf("failed to get commit status: %w", err))
+	// } else if !commitStatus.Successful {
+	// 	panic(fmt.Errorf("transaction %s failed to commit with status: %d", commitStatus.TransactionID, int32(commitStatus.Code)))
+	// }
 
 	fmt.Printf("*** Transaction committed successfully\n")
 }
@@ -225,8 +260,7 @@ func deleteEnergyAsset(contract *client.Contract) {
 	// _, err := contract.SubmitTransaction("DeleteAsset", asset_ID)
 	// Specifico che l'endorsement è richiesto solo all'org che vuole creare la transazione
 	_, err := contract.Submit("DeleteAsset",
-		client.WithArguments(assetID),
-		client.WithEndorsingOrganizations(mspID))
+		client.WithArguments(assetID))
 
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))

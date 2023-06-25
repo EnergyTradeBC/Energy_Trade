@@ -20,38 +20,40 @@ type SmartContract struct {
 
 // Auction data
 type Auction struct {
+	AuctionID    string             `json:"auctionID"`
 	Type         string             `json:"objectType"`
 	ItemSold     string             `json:"item"`
 	Seller       string             `json:"seller"`
-	Quantity     int                `json:"quantity"`
+	Quantity     float32            `json:"quantity"`
 	Orgs         []string           `json:"organizations"`
 	PrivateBids  map[string]BidHash `json:"privateBids"`
 	RevealedBids map[string]FullBid `json:"revealedBids"`
 	Winners      []Winners          `json:"winners"`
-	Price        int                `json:"price"`
+	Price        float32            `json:"price"`
 	Status       string             `json:"status"`
 	Auditor      bool               `json:"auditor"`
-	StartingBid  int                `json:"startingBid"`
+	StartingBid  float32            `json:"startingBid"`
 }
 
 // event provides an organized struct for emitting events
 type event struct {
+	AuctionID   string    `json:"auctionID"`
 	ItemSold    string    `json:"item"`
-	StartingBid int       `json:"startingBid"`
+	StartingBid float32   `json:"startingBid"`
 	Seller      string    `json:"seller"`
-	Quantity    int       `json:"quantity"`
+	Quantity    float32   `json:"quantity"`
 	Winners     []Winners `json:"winners"`
-	Price       int       `json:"price"`
+	Price       float32   `json:"price"`
 	Status      string    `json:"status"`
 }
 
 // FullBid is the structure of a revealed bid
 type FullBid struct {
-	Type     string `json:"objectType"`
-	Quantity int    `json:"quantity"`
-	Price    int    `json:"price"`
-	Org      string `json:"org"`
-	Buyer    string `json:"buyer"`
+	Type     string  `json:"objectType"`
+	Quantity float32 `json:"quantity"`
+	Price    float32 `json:"price"`
+	Org      string  `json:"org"`
+	Buyer    string  `json:"buyer"`
 }
 
 // BidHash is the structure of a private bid
@@ -62,15 +64,15 @@ type BidHash struct {
 
 // Winners stores the winners of the auction
 type Winners struct {
-	Buyer    string `json:"buyer"`
-	Quantity int    `json:"quantity"`
+	Buyer    string  `json:"buyer"`
+	Quantity float32 `json:"quantity"`
 }
 
 const bidKeyType = "bid"
 
 // CreateAuction creates on auction on the public channel. The identity that
 // submits the transacion becomes the seller of the auction
-func (s *SmartContract) CreateAuction(ctx contractapi.TransactionContextInterface, auctionID string, itemsold string, quantity int, startingBid int, withAuditor string) error {
+func (s *SmartContract) CreateAuction(ctx contractapi.TransactionContextInterface, auctionID string, itemsold string, quantity float32, startingBid float32, withAuditor string) error {
 
 	// get ID of submitting client
 	clientID, err := s.GetSubmittingClientIdentity(ctx)
@@ -95,6 +97,7 @@ func (s *SmartContract) CreateAuction(ctx contractapi.TransactionContextInterfac
 	revealedBids := make(map[string]FullBid)
 
 	auction := Auction{
+		AuctionID:    auctionID,
 		Type:         "auction",
 		ItemSold:     itemsold,
 		Quantity:     quantity,
@@ -127,7 +130,7 @@ func (s *SmartContract) CreateAuction(ctx contractapi.TransactionContextInterfac
 	}
 
 	// Emit the createAuction event
-	createAuctionEvent := event{itemsold, startingBid, clientID, quantity, []Winners{}, 0, "open"}
+	createAuctionEvent := event{auctionID, "energy", startingBid, clientID, quantity, []Winners{}, 0, "open"}
 	createAuctionEventJSON, err := json.Marshal(createAuctionEvent)
 	if err != nil {
 		return fmt.Errorf("failed to obtain JSON encoding: %v", err)
@@ -349,10 +352,10 @@ func (s *SmartContract) RevealBid(ctx contractapi.TransactionContextInterface, a
 
 	// we can add the bid to the auction if all checks have passed
 	type transientBidInput struct {
-		Quantity int    `json:"quantity"`
-		Price    int    `json:"price"`
-		Org      string `json:"org"`
-		Buyer    string `json:"buyer"`
+		Quantity float32 `json:"quantity"`
+		Price    float32 `json:"price"`
+		Org      string  `json:"org"`
+		Buyer    string  `json:"buyer"`
 	}
 
 	// unmarshal bid imput
@@ -442,7 +445,7 @@ func (s *SmartContract) CloseAuction(ctx contractapi.TransactionContextInterface
 	}
 
 	// Emit the closeAuction event
-	closeAuctionEvent := event{auction.ItemSold, auction.StartingBid, clientID, auction.Quantity, []Winners{}, 0, "closed"}
+	closeAuctionEvent := event{auctionID, auction.ItemSold, auction.StartingBid, clientID, auction.Quantity, []Winners{}, 0, "closed"}
 	closeAuctionEventJSON, err := json.Marshal(closeAuctionEvent)
 	if err != nil {
 		return fmt.Errorf("failed to obtain JSON encoding: %v", err)
@@ -556,7 +559,7 @@ func (s *SmartContract) EndAuction(ctx contractapi.TransactionContextInterface, 
 	}
 
 	// Emit the endAuction event
-	endAuctionEvent := event{auction.ItemSold, auction.StartingBid, clientID, auction.Quantity, auction.Winners, auction.Prize, "ended"}
+	endAuctionEvent := event{auctionID, auction.ItemSold, auction.StartingBid, clientID, auction.Quantity, auction.Winners, auction.Prize, "ended"}
 	endAuctionEventJSON, err := json.Marshal(endAuctionEvent)
 	if err != nil {
 		return fmt.Errorf("failed to obtain JSON encoding: %v", err)

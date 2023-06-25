@@ -54,3 +54,7 @@ export TARGET_TLS_OPTIONS=(-o localhost:7050 --ordererTLSHostnameOverride ordere
 --tlsRootCertFiles "${PWD}/organizations/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/tls/ca.crt"
 --peerAddresses localhost:13051
 --tlsRootCertFiles "${PWD}/organizations/peerOrganizations/org5.example.com/peers/peer0.org5.example.com/tls/ca.crt")
+
+
+export PATH="/home/bchain/EnergyTrade/bin:$PATH"
+export FABRIC_CFG_PATH=/home/bchain/EnergyTrade/config/

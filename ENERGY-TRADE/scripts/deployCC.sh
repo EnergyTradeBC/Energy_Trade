@@ -89,7 +89,7 @@ else
 fi
 
 # Set the default values
-CHANNEL_NAME="cer"
+CHANNEL_NAME="channeltest"
 CC_NAME=""
 CC_SRC_PATH=""
 CC_VERSION="1.0"

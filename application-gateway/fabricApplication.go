@@ -28,25 +28,23 @@ type NetworkConfig struct {
 }
 
 type moneySettingsStruct struct {
-	startingBid     string
-	minPrizeAuction string
-	maxPrizeAuction string
+	startingBid     float32
+	maxPrizeAuction float32
 }
 
 const orgMSP = "Org1MSP"
 
-const assetID = "energy_1"
+const assetID = "energy"
 const auctionID = "auction_1"
 
 const moneyName = ""
 const moneySymbol = ""
 const moneyDecimals = ""
 
-var bidTransactionID = ""
+// var bidTransactionID = ""
 var moneySettings = &moneySettingsStruct{
-	startingBid:     "",
-	minPrizeAuction: "",
-	maxPrizeAuction: "",
+	startingBid:     0.0,
+	maxPrizeAuction: 0.0,
 }
 
 var contract_money *client.Contract
@@ -78,13 +76,14 @@ func main() {
 	// SETUP THE REST INTERFACE
 	router := gin.Default()
 	router.GET("/moneySettings", getMoneySettings)
+	router.POST("/moneySettings", postMoneySettings)
+
 	router.GET("/currentBalance", getCurrentBalance)
 	router.GET("/moneyTransactions", getMoneyTransactions)
+
 	router.GET("/currentEnergyAsset", getCurrentEnergyAsset)
 	router.GET("/energyTransactions", getEnergyTransactions)
-	router.GET("/remainingAssets")
-
-	router.POST("/moneySettings", postMoneySettings)
+	router.GET("/remainingAssets", getRemainingEnergy)
 
 	router.Run("localhost:8080")
 
@@ -126,7 +125,6 @@ func main() {
 	defer cancel()
 
 	// Listen for events emitted by subsequent transactions
-	startMoneyChaincodeEventListening(ctx, network, chaincodeMoneyName)
 	startEnergyChaincodeEventListening(ctx, network, chaincodeEnergyName)
 	startAuctionChaincodeEventListening(ctx, network, chaincodeAuctionName)
 
@@ -142,13 +140,13 @@ func main() {
 func readNetworkConfig() (string, string, string, string) {
 	content, err := ioutil.ReadFile("./network_config.json")
 	if err != nil {
-		panic(fmt.Errorf("Error when opening file: %w", err))
+		panic(fmt.Errorf("error when opening file: %w", err))
 	}
 
 	var payload NetworkConfig
 	err = json.Unmarshal(content, &payload)
 	if err != nil {
-		panic(fmt.Errorf("Error during Unmarshal(): %w", err))
+		panic(fmt.Errorf("error during Unmarshal(): %w", err))
 	}
 
 	return payload.ChannelName, payload.ChaincodeMoneyName, payload.ChaincodeEnergyName, payload.ChaincodeAuctionName
@@ -158,13 +156,13 @@ func readNetworkConfig() (string, string, string, string) {
 func readMQTTConfig() (string, int, string, string, string, string) {
 	content, err := ioutil.ReadFile("./mqtt_config.json")
 	if err != nil {
-		panic(fmt.Errorf("Error when opening file: %w", err))
+		panic(fmt.Errorf("error when opening file: %w", err))
 	}
 
 	var payload MQTTConfig
 	err = json.Unmarshal(content, &payload)
 	if err != nil {
-		panic(fmt.Errorf("Error during Unmarshal(): %w", err))
+		panic(fmt.Errorf("error during Unmarshal(): %w", err))
 	}
 
 	return payload.broker, payload.port, payload.topic, payload.clientID, payload.username, payload.password

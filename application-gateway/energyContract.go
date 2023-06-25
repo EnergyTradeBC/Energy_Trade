@@ -1,41 +1,60 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 )
 
-// Retrieves all the energy assets present on the ledger.
-func getAllEnergyAssets(contract *client.Contract) string {
-	fmt.Println("\n--> Evaluate Transaction: GetAllEnergyAssets, function returns all the current energy assets on the ledger")
-
-	evaluateResult, err := contract.EvaluateTransaction("GetAllAssets")
-
-	if err != nil {
-		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
-	}
-	result := formatJSON(evaluateResult)
-
-	fmt.Printf("*** Result:%s\n", result)
-
-	return result
+type Asset struct {
+	Asset_ID string `json:"Asset_ID"`
+	Owner_ID string `json:"Owner_ID"`
+	Quantity string `json:"Quantity"`
 }
 
-// Retrieves the asset, if existing, with the assetID.
+type EnergyEvent struct {
+	New_OwnerID string  `json:"New_OwnerID"`
+	Quantity    float32 `json:"Quantity"`
+}
+
+// Retrieves all the energy assets present on the ledger.
+// func getAllEnergyAssets(contract *client.Contract) string {
+// 	fmt.Println("\n--> Evaluate Transaction: GetAllEnergyAssets, function returns all the current energy assets on the ledger")
+
+// 	evaluateResult, err := contract.EvaluateTransaction("GetAllAssets")
+
+// 	if err != nil {
+// 		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
+// 	}
+// 	result := formatJSON(evaluateResult)
+
+// 	fmt.Printf("*** Result:%s\n", result)
+
+// 	return result
+// }
+
+// Retrieves the asset, if existing, with the assetID and returns the quantity.
 func readEnergyAssetByID(contract *client.Contract) string {
 	fmt.Printf("\n--> Evaluate Transaction: ReadAsset, function returns asset attributes\n")
 
 	evaluateResult, err := contract.EvaluateTransaction("ReadAsset", assetID)
 
 	if err != nil {
-		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
+		// Used as signal that there is no asset with that ID
+		return "failed"
 	}
 	result := formatJSON(evaluateResult)
 
+	var asset Asset
+	err = json.Unmarshal(evaluateResult, &asset)
+	if err != nil {
+		return "Error during unmarshal"
+	}
+
 	fmt.Printf("*** Result:%s\n", result)
 
-	return result // se invece il risultato è negativo, ovvero non esiste un asset con quell'ID, come si comporta?
+	return asset.Quantity // se invece il risultato è negativo, ovvero non esiste un asset con quell'ID, come si comporta?
 }
 
 // Submit a transaction synchronously, blocking until it has been committed to the ledger.
@@ -46,8 +65,7 @@ func createEnergyAsset(contract *client.Contract, quantity string) {
 	// _, err := contract.SubmitTransaction("CreateAsset", asset_ID, quantity)
 	// Specifico che l'endorsement deve essere fornito solo dall'organizzazione stessa che sta creando l'asset (nessun altro deve confermare)
 	_, err := contract.Submit("CreateAsset",
-		client.WithArguments(assetID, quantity),
-		client.WithEndorsingOrganizations(orgMSP))
+		client.WithArguments(assetID, quantity))
 
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
